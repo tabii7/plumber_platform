@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\WhatsAppController;
 use App\Http\Controllers\Api\WaRuntimeController;
+use App\Http\Controllers\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,4 +23,8 @@ Route::post('/whatsapp/send', [WhatsAppController::class, 'send']);
 
 
 Route::post('/wa/incoming', [WaRuntimeController::class, 'incoming']);
+
+// Address search API
+Route::get('/address/search', [AddressController::class, 'search']);
+Route::get('/address/search-vlaanderen', [AddressController::class, 'searchVlaanderen']);
 

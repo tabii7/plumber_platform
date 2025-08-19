@@ -31,7 +31,8 @@ class User extends Authenticatable
     'role',
     'btw_number',
     'werk_radius',
-    'conversation_state'
+    'conversation_state',
+    'address_json'
 ];
 
     /**

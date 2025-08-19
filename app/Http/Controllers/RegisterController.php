@@ -24,10 +24,10 @@ class RegisterController extends Controller
             'email'            => 'required|email|unique:users',
             'password'         => 'required|string|min:6',
             'address'          => 'required|string|max:255',
-            'number'           => 'required|string|max:10',
-            'postal_code'      => 'required|string|max:10',
-            'city'             => 'required|string|max:255',
-            'country'          => 'required|string|max:255',
+            'number'           => 'nullable|string|max:10',
+            'postal_code'      => 'nullable|string|max:10',
+            'city'             => 'nullable|string|max:255',
+            'address_json'     => 'nullable|string',
             'role'             => 'required|in:client,plumber',
             'btw_number'       => 'nullable|string|max:50',
             'werk_radius'      => 'nullable|string',
@@ -40,13 +40,14 @@ class RegisterController extends Controller
             'email'           => $validated['email'],
             'password'        => Hash::make($validated['password']),
             'address'         => $validated['address'],
-            'number'          => $validated['number'],
-            'postal_code'     => $validated['postal_code'],
-            'city'            => $validated['city'],
-            'country'         => $validated['country'],
+            'number'          => $validated['number'] ?? null,
+            'postal_code'     => $validated['postal_code'] ?? null,
+            'city'            => $validated['city'] ?? null,
+            'country'         => 'Belgium', // Default to Belgium
             'role'            => $validated['role'],
             'btw_number'      => $validated['btw_number'] ?? null,
             'werk_radius'     => $validated['werk_radius'] ?? null,
+            'address_json'    => $validated['address_json'] ?? null,
         ]);
 
         Auth::login($user);

@@ -11,6 +11,7 @@ use App\Http\Controllers\PostcodeController;
 // use App\Http\Controllers\AdminWhatsappController;
 use App\Http\Controllers\PlumberCoverageController;
 use App\Http\Controllers\PlumberCategoryController;
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Admin\WaFlowController;
 use App\Http\Controllers\Admin\WaNodeController;
 use App\Http\Controllers\Admin\WhatsAppController as AdminWhatsAppController;
@@ -33,6 +34,10 @@ Route::get('/', function () {
 // Postal Code search + radius
 Route::get('/zoek-postcode', [PostcodeController::class, 'zoek'])->name('postcode.search');
 Route::get('/werk-radius', [PostcodeController::class, 'radius'])->name('postcode.radius');
+
+
+
+
 
 
 
