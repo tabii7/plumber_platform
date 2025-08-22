@@ -19,6 +19,10 @@ class User extends Authenticatable
      */
    protected $fillable = [
     'full_name',
+    'company_name',
+    'subscription_plan',
+    'subscription_status',
+    'subscription_ends_at',
     'phone',
     'whatsapp_number',
     'email',
@@ -52,6 +56,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'subscription_ends_at' => 'datetime',
         'password' => 'hashed',
     ];
 

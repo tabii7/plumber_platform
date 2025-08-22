@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Notifications\WelcomeNotification;
+use App\Services\WhatsAppService;
 
 class RegisterController extends Controller
 {
@@ -19,7 +21,7 @@ class RegisterController extends Controller
    
         $validated = $request->validate([
             'full_name'        => 'required|string|max:255',
-            'phone'            => 'required|string|max:20',
+            'company_name'     => 'nullable|string|max:255',
             'whatsapp_number'  => 'required|string|max:20',
             'email'            => 'required|email|unique:users',
             'password'         => 'required|string|min:6',
@@ -30,12 +32,11 @@ class RegisterController extends Controller
             'address_json'     => 'nullable|string',
             'role'             => 'required|in:client,plumber',
             'btw_number'       => 'nullable|string|max:50',
-            'werk_radius'      => 'nullable|string',
         ]);
 
         $user = User::create([
             'full_name'       => $validated['full_name'],
-            'phone'           => $validated['phone'],
+            'company_name'    => $validated['company_name'] ?? null,
             'whatsapp_number' => $validated['whatsapp_number'],
             'email'           => $validated['email'],
             'password'        => Hash::make($validated['password']),
@@ -46,11 +47,20 @@ class RegisterController extends Controller
             'country'         => 'Belgium', // Default to Belgium
             'role'            => $validated['role'],
             'btw_number'      => $validated['btw_number'] ?? null,
-            'werk_radius'     => $validated['werk_radius'] ?? null,
             'address_json'    => $validated['address_json'] ?? null,
         ]);
 
         Auth::login($user);
+
+        // Send welcome notification via email
+        $user->notify(new WelcomeNotification());
+
+        // Send welcome message via WhatsApp
+        $whatsappService = new WhatsAppService();
+        $hasActiveSubscription = $user->subscription_status === 'active' && 
+                               $user->subscription_ends_at && 
+                               $user->subscription_ends_at->isFuture();
+        $whatsappService->sendWelcomeMessage($user, $hasActiveSubscription);
 
         return redirect()->route('dashboard')->with('success', 'Account aangemaakt!');
     }

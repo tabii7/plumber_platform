@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Auth;
 // Welcome page
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
 
 // Postal Code search + radius
 Route::get('/zoek-postcode', [PostcodeController::class, 'zoek'])->name('postcode.search');
@@ -160,3 +160,19 @@ require __DIR__.'/auth.php';
 // ✅ Custom registration routes overriding Breeze defaults
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+
+// Checkout routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'checkout'])->name('checkout');
+    Route::get('/checkout/success', [App\Http\Controllers\CheckoutController::class, 'success'])->name('checkout.success');
+});
+
+// Webhook route (no auth required)
+Route::post('/checkout/webhook', [App\Http\Controllers\CheckoutController::class, 'webhook'])->name('checkout.webhook');
+
+// Support page for WhatsApp menu
+Route::get('/support', function () {
+    return view('support');
+})->name('support');
+
+

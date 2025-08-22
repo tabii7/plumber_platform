@@ -357,7 +357,86 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+        /* Pricing — theme matched to hero (slate bg + green accents) */
+.pricing-section {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+  padding: 80px 0;
+}
+.pricing-section .section-title h2 { color:#fff; }
+.pricing-section .section-title p { color: rgba(255,255,255,.85); }
+
+.pricing-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  height: 100%;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 50px rgba(2,6,23,.14);
+  border-color: rgba(16,185,129,.35);
+}
+
+.pricing-card .pricing-icon {
+  width: 64px; height: 64px; border-radius: 12px;
+  margin: 0 auto 1rem;
+  display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color:#fff; font-size:1.7rem;
+}
+
+.pricing-card h3 { color:#1f2937; font-weight:700; margin-bottom: 12px; }
+
+.pricing-price .current-price { color:#10b981; font-size:2.2rem; font-weight:800; line-height:1; }
+.pricing-price .period { color:#6b7280; }
+.pricing-price .original-price { color:#9ca3af; text-decoration:line-through; }
+
+.discount-badge {
+  display:inline-block; margin-top:10px; font-weight:700; font-size:.9rem;
+  color:#065f46; background:rgba(16,185,129,.12);
+  border:1px solid rgba(16,185,129,.35); border-radius:20px;
+  padding:6px 12px;
+}
+
+.pricing-features li { color:#374151; }
+.pricing-features i { color:#10b981; }
+
+.pricing-card .btn {
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.pricing-card .btn.btn-primary {
+  /* Uses your existing .btn-primary gradient (green) */
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 8px 24px rgba(16,185,129,.28);
+  border: none;
+}
+.pricing-card .btn.btn-primary:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.pricing-card.featured {
+  border: 2px solid #10b981;
+  box-shadow: 0 24px 60px rgba(16,185,129,.18);
+  position: relative;
+}
+.featured-badge {
+  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+  background:#10b981; color:#0b1f17; /* dark teal text for contrast */
+  padding:8px 14px; border-radius:999px; font-weight:800; font-size:.82rem;
+  border: 1px solid rgba(2,6,23,.08);
+}
+.yearly-price {
+  background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px;
+  padding:10px; margin-top:10px;
+}
+.yearly-price div:first-child { font-weight:700; color:#1f2937; }
+.yearly-price div:last-child { color:#059669; font-size:.92rem; }
+
         @media (max-width: 768px) {
             .hero-title {
                 font-size: 2.5rem;
@@ -386,19 +465,51 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url('/') }}">Home</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/register') }}">Register</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/login') }}">Login</a>
-                    </li>
-                    <li class="nav-item ms-2">
-                        <a href="{{ url('/register') }}" class="btn btn-primary">Get Started</a>
-                    </li>
+                    @auth
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('dashboard') }}">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('profile.edit') }}">Profile</a>
+                        </li>
+                    @endauth
+                </ul>
+                
+                <ul class="navbar-nav ms-auto">
+                    @guest
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url('/register') }}">Register</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url('/login') }}">Login</a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a href="{{ url('/register') }}" class="btn btn-primary">Get Started</a>
+                        </li>
+                    @else
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ Auth::user()->full_name }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user-edit me-2"></i>Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    @endguest
                 </ul>
             </div>
         </div>
@@ -414,12 +525,21 @@
                         <p class="hero-subtitle">Reliable, licensed plumbers available 24/7 for all your plumbing needs. Emergency repairs, installations, and maintenance with guaranteed quality.</p>
                         
                         <div class="d-flex flex-wrap gap-3 mb-4">
-                            <a href="{{ url('/register') }}" class="btn btn-outline btn-lg">
-                                <i class="fas fa-user-plus me-2"></i>Register Now
-                            </a>
-                            <a href="{{ url('/login') }}" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
-                            </a>
+                            @guest
+                                <a href="{{ url('/register') }}" class="btn btn-outline btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i>Register Now
+                                </a>
+                                <a href="{{ url('/login') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                            @else
+                                <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                                </a>
+                                <a href="#pricing" class="btn btn-outline btn-lg">
+                                    <i class="fas fa-crown me-2"></i>View Plans
+                                </a>
+                            @endguest
                         </div>
                         
                         <ul class="hero-features">
@@ -602,6 +722,108 @@
             </div>
         </div>
     </section>
+
+    <!-- Pricing Section -->
+  <section id="pricing" class="section pricing-section">
+  <div class="container">
+    <div class="section-title text-center mb-5">
+      <h2>Choose Your Plan</h2>
+      <p>Select the perfect plan for your plumbing needs</p>
+    </div>
+
+    <div class="row justify-content-center g-4">
+      <!-- Client Plan -->
+      <div class="col-lg-4 col-md-6">
+        <div class="pricing-card">
+          <div class="pricing-icon"><i class="fas fa-home"></i></div>
+          <h3>Client Plan</h3>
+
+          <div class="pricing-price mb-3">
+            <div class="current-price">€19.99</div>
+            <div class="period">/month</div>
+            <div class="original-price">€26.99</div>
+            <span class="discount-badge">25% OFF</span>
+          </div>
+
+          <div class="pricing-features mb-4" style="text-align:left">
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Unlimited plumber requests</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Instant WhatsApp contact</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Save favorite plumbers</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>24/7 support</li>
+            </ul>
+          </div>
+
+          <a href="{{ route('checkout', ['plan' => 'client_monthly']) }}"
+             class="btn btn-primary btn-lg w-100">
+            Get Started
+          </a>
+        </div>
+      </div>
+
+      <!-- Company Plan (Featured) -->
+      <div class="col-lg-4 col-md-6">
+        <div class="pricing-card featured">
+          <div class="featured-badge">MOST POPULAR</div>
+          <div class="pricing-icon"><i class="fas fa-building"></i></div>
+          <h3>Company Plan</h3>
+
+          <div class="pricing-price mb-3">
+            <div class="current-price">€29.99</div>
+            <div class="period">/month</div>
+            <div class="yearly-price">
+              <div>€179.88/year</div>
+              <div>Save 50% until Sept 30</div>
+            </div>
+          </div>
+
+          <div class="pricing-features mb-4" style="text-align:left">
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Unlimited job postings</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Team member accounts</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Priority support</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Access to verified plumbers</li>
+            </ul>
+          </div>
+
+          <a href="{{ route('checkout', ['plan' => 'company_monthly']) }}"
+             class="btn btn-primary btn-lg w-100">
+            Get Started
+          </a>
+        </div>
+      </div>
+
+      <!-- Plumber Plan -->
+      <div class="col-lg-4 col-md-6">
+        <div class="pricing-card">
+          <div class="pricing-icon"><i class="fas fa-tools"></i></div>
+          <h3>Plumber Plan</h3>
+
+          <div class="pricing-price mb-3">
+            <div class="current-price">FREE</div>
+            <div class="period">forever</div>
+          </div>
+
+          <div class="pricing-features mb-4" style="text-align:left">
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Create free profile</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Set service radius</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Receive unlimited requests</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Direct WhatsApp contact</li>
+            </ul>
+          </div>
+
+          <a href="{{ route('register', ['role' => 'plumber']) }}"
+             class="btn btn-primary btn-lg w-100">
+            Join Free
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 
     <!-- Contact Section -->
     <section class="section contact-section">

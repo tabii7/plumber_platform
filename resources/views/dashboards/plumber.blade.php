@@ -7,6 +7,9 @@
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Plumber Dashboard</h1>
             <p class="text-sm text-gray-600">Welcome, {{ Auth::user()->full_name ?? Auth::user()->name }} — manage your availability and jobs here.</p>
+            @if(Auth::user()->company_name)
+                <p class="text-xs text-gray-500 mt-1">Company: {{ Auth::user()->company_name }}</p>
+            @endif
         </div>
 
         @php
@@ -25,10 +28,17 @@
             };
         @endphp
 
-        <span class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold ring-1 ring-inset {{ $badge }}">
-            <span class="h-2 w-2 rounded-full {{ $dot }}"></span>
-            Status: {{ ucfirst($status) }}
-        </span>
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold ring-1 ring-inset {{ $badge }}">
+                <span class="h-2 w-2 rounded-full {{ $dot }}"></span>
+                Status: {{ ucfirst($status) }}
+            </span>
+            <a href="{{ route('welcome') }}#pricing" 
+               class="inline-flex items-center bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-semibold text-sm shadow-lg hover:shadow-xl">
+                <i class="fas fa-crown mr-2"></i>
+                Subscribe
+            </a>
+        </div>
     </div>
 @endsection
 
@@ -136,6 +146,64 @@
                     <svg class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
                 </a>
             </div>
+        </div>
+
+        {{-- Subscription --}}
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg shadow-sm ring-1 ring-green-200 p-5">
+            <h2 class="text-sm font-semibold text-gray-900 mb-3">Subscription</h2>
+            
+            @if(Auth::user()->subscription_status === 'active' && Auth::user()->subscription_ends_at)
+                <div class="bg-white p-4 rounded-lg border border-green-200 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Current Plan</p>
+                            <p class="text-lg font-bold text-green-600">{{ Auth::user()->subscription_plan }}</p>
+                            <p class="text-sm font-medium text-gray-700 mt-2">Expiry Date</p>
+                            <p class="text-lg font-bold text-green-600">
+                                {{ Auth::user()->subscription_ends_at->format('F j, Y') }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                @php
+                                    $daysLeft = Auth::user()->subscription_ends_at->diffInDays(now());
+                                @endphp
+                                @if($daysLeft == 0)
+                                    <span class="text-orange-600 font-medium">⚠️ Expires today!</span>
+                                @elseif($daysLeft <= 7)
+                                    <span class="text-orange-600 font-medium">⚠️ Expires in {{ $daysLeft }} days</span>
+                                @elseif($daysLeft <= 30)
+                                    <span class="text-blue-600 font-medium">ℹ️ Expires in {{ $daysLeft }} days</span>
+                                @else
+                                    <span class="text-green-600 font-medium">✓ Valid for {{ $daysLeft }} more days</span>
+                                @endif
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <a href="{{ route('welcome') }}#pricing" 
+                       class="inline-flex items-center bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-semibold text-sm shadow-lg hover:shadow-xl">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Renew Subscription
+                    </a>
+                    <p class="text-xs text-gray-500 mt-2">Extend your current plan</p>
+                </div>
+            @else
+                <div class="text-center">
+                    <p class="text-sm text-gray-600 mb-4">Get premium features and priority client matching</p>
+                    <a href="{{ route('welcome') }}#pricing" 
+                       class="inline-flex items-center bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-semibold text-sm shadow-lg hover:shadow-xl">
+                        <i class="fas fa-star mr-2"></i>
+                        View Plans
+                    </a>
+                </div>
+            @endif
         </div>
 
         {{-- My Stats --}}
