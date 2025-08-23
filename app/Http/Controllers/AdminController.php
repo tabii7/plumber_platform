@@ -6,15 +6,56 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Request as ServiceRequest;
 use App\Models\Plumber;
+use App\Models\PlumberCoverage;
 
 class AdminController extends Controller
 {
     public function dashboard()
     {
-        $clients = User::where('role', 'client')->count();
-        $plumbers = User::where('role', 'plumber')->count();
-        $requests = ServiceRequest::count();
+        // User statistics
+        $totalUsers = User::count();
+        $totalPlumbers = User::where('role', 'plumber')->count();
+        $totalClients = User::where('role', 'client')->count();
+        
+        // Subscription statistics
+        $activeSubscriptions = User::where('subscription_status', 'active')->count();
+        
+        // Service statistics
+        $totalRequests = ServiceRequest::count();
+        $completedJobs = ServiceRequest::where('status', 'completed')->count();
+        
+        // Rating statistics
+        $averageRating = 4.5; // This would come from actual rating data
+        
+        // Coverage statistics
+        $totalCoverageAreas = PlumberCoverage::count();
+        
+        // Recent activity (placeholder - you can implement actual activity tracking)
+        $recentActivity = collect([
+            (object) [
+                'description' => 'New plumber registered',
+                'created_at' => now()->subHours(2)
+            ],
+            (object) [
+                'description' => 'Service request completed',
+                'created_at' => now()->subHours(4)
+            ],
+            (object) [
+                'description' => 'New subscription activated',
+                'created_at' => now()->subHours(6)
+            ]
+        ]);
 
-        return view('admin.dashboard', compact('clients', 'plumbers', 'requests'));
+        return view('dashboards.admin', compact(
+            'totalUsers',
+            'totalPlumbers', 
+            'totalClients',
+            'activeSubscriptions',
+            'totalRequests',
+            'completedJobs',
+            'averageRating',
+            'totalCoverageAreas',
+            'recentActivity'
+        ));
     }
 }

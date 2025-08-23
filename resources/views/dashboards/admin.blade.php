@@ -1,190 +1,339 @@
-@extends('layouts.app')
+@extends('layouts.modern-dashboard')
 
 @section('title', 'Admin Dashboard')
 
-@section('header')
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p class="text-sm text-gray-600">
-                Welcome, {{ Auth::user()->full_name ?? Auth::user()->name }} — manage plumbers, clients, WhatsApp, and flows.
-            </p>
-        </div>
-        <a href="{{ route('profile.edit') }}"
-           class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700">
-           Account Settings
+@section('page-title', 'Admin Dashboard')
+
+@section('sidebar-nav')
+    <div class="nav-item">
+        <a href="{{ route('admin.dashboard') }}" class="nav-link active">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.whatsapp') }}" class="nav-link">
+            <i class="fab fa-whatsapp"></i>
+            <span>WhatsApp</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.flows.index') }}" class="nav-link">
+            <i class="fas fa-project-diagram"></i>
+            <span>WhatsApp Flows</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('plumbers.index') }}" class="nav-link">
+            <i class="fas fa-user-tie"></i>
+            <span>Plumbers</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('clients.index') }}" class="nav-link">
+            <i class="fas fa-users"></i>
+            <span>Clients</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.requests.index') }}" class="nav-link">
+            <i class="fas fa-tools"></i>
+            <span>Service Requests</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('support') }}" class="nav-link">
+            <i class="fas fa-headset"></i>
+            <span>Support</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('profile.edit') }}" class="nav-link">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
         </a>
     </div>
 @endsection
 
 @section('content')
-    @if (session('success'))
-        <div class="mb-4 rounded-md bg-green-50 p-4 ring-1 ring-green-600/20 text-green-800">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if (session('error'))
-        <div class="mb-4 rounded-md bg-red-50 p-4 ring-1 ring-red-600/20 text-red-800">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 ">
-        {{-- Plumbers --}}
-        <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 p-5 ">
-            <div class="flex items-center justify-between text-black">
-                <h2 class="text-sm font-semibold text-gray-900">Plumbers</h2>
-                <span class="text-xs text-gray-500">CRUD</span>
-            </div>
-            <p class="mt-1 text-sm text-gray-600">
-                Create, update and manage plumbers, service areas, tariffs and availability.
-            </p>
-            <div class="mt-4 flex flex-wrap gap-2">
-                <a href="{{ route('plumbers.index') }}"
-                   class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700">
-                    View all
-                </a>
-                <a href="{{ route('plumbers.create') }}"
-                   class="inline-flex items-center rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                    Add new
-                </a>
-            </div>
-        </div>
-
-        {{-- Clients --}}
-        <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 p-5">
-            <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-gray-900">Clients</h2>
-                <span class="text-xs text-gray-500">CRUD</span>
-            </div>
-            <p class="mt-1 text-sm text-gray-600">Manage registered clients and their requests history.</p>
-            <div class="mt-4 flex flex-wrap gap-2">
-                <a href="{{ route('clients.index') }}"
-                   class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700">
-                    View all
-                </a>
-            </div>
-        </div>
-
-        {{-- Requests --}}
-        <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 p-5">
-            <h2 class="text-sm font-semibold text-gray-900">Requests</h2>
-            <p class="mt-1 text-sm text-gray-600">Oversee incoming job requests.</p>
-            <div class="mt-4 flex flex-wrap gap-2">
-                <a href="{{ route('requests.index') }}"
-                   class="inline-flex items-center rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                    Open list
-                </a>
-            </div>
-        </div>
-
-        {{-- WhatsApp Connection --}}
-        <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 p-5 lg:col-span-2">
-            <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-gray-900">WhatsApp Connection</h2>
-                <span id="wa-status" class="text-xs text-gray-500">Checking…</span>
-            </div>
-            <p class="mt-1 text-sm text-gray-600">
-                Scan the QR to link your WhatsApp session. Keep the Node bot running.
-            </p>
-
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <div class="rounded-md border border-dashed border-gray-300 p-3 flex items-center justify-center min-h-[220px]">
-                        <img id="wa-qr" src="" alt="QR Code" class="hidden max-h-[260px]">
-                        <div id="wa-qr-placeholder" class="text-sm text-gray-500">QR will appear here…</div>
-                    </div>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <button id="btn-refresh-qr"
-                                class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700">
-                            Refresh QR
-                        </button>
-                        <button id="btn-check-status"
-                                class="inline-flex items-center rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                            Check Status
-                        </button>
-                        <a href="{{ route('admin.whatsapp') }}"
-                           class="inline-flex items-center rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                            Open WhatsApp page
-                        </a>
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-2">Welcome back, {{ Auth::user()->full_name ?? Auth::user()->email }}!</h4>
+                            <p class="text-muted mb-0">Monitor and manage the plumber platform from your admin dashboard.</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="user-avatar" style="width: 64px; height: 64px; font-size: 1.5rem; margin: 0 auto;">
+                                {{ strtoupper(substr(Auth::user()->full_name ?? Auth::user()->email, 0, 1)) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="space-y-3">
-                    <div class="rounded-md bg-gray-50 p-3">
-                        <h3 class="text-sm font-semibold text-gray-900">Bot URL</h3>
-                        <p class="text-sm text-gray-600">
-                            Configured in <code>.env</code> as <code>WHATSAPP_BOT_URL</code>.
-                        </p>
-                        <code class="text-xs text-gray-500">
-                            {{ config('services.whatsapp.bot_url') ?? 'http://127.0.0.1:3000' }}
-                        </code>
-                    </div>
-                    <div class="rounded-md bg-gray-50 p-3">
-                        <h3 class="text-sm font-semibold text-gray-900">Tips</h3>
-                        <ul class="text-sm text-gray-600 list-disc ms-5">
-                            <li>Run the Node bot: <code>node whatsapp-bot/index.js</code></li>
-                            <li>Keep the terminal open; re-scan QR if needed.</li>
-                            <li>Use one number in production; don’t multi-login.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Custom Messages (Flows) --}}
-        <div class="bg-white rounded-lg shadow-sm ring-1 ring-gray-200 p-5">
-            <h2 class="text-sm font-semibold text-gray-900">Custom Messages</h2>
-            <p class="mt-1 text-sm text-gray-600">Edit interactive WhatsApp flows and nodes.</p>
-            <div class="mt-4 flex flex-wrap gap-2">
-                <a href="{{ route('admin.admin.flows.index') }}"
-                   class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700">
-                   Manage Flows
-                </a>
             </div>
         </div>
     </div>
 
-    {{-- Dashboard QR/Status JS (uses Laravel proxy endpoints) --}}
-    <script>
-        const qrImg = document.getElementById('wa-qr');
-        const qrPH  = document.getElementById('wa-qr-placeholder');
-        const statusEl = document.getElementById('wa-status');
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <div class="stats-number">{{ $totalUsers ?? 0 }}</div>
+                        <div class="stats-label">Total Users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card success">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div>
+                        <div class="stats-number">{{ $totalPlumbers ?? 0 }}</div>
+                        <div class="stats-label">Plumbers</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card info">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="stats-number">{{ $totalClients ?? 0 }}</div>
+                        <div class="stats-label">Clients</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card warning">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon me-3">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <div>
+                        <div class="stats-number">{{ $activeSubscriptions ?? 0 }}</div>
+                        <div class="stats-label">Active Subscriptions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        async function getQR() {
-            try {
-                const res = await fetch('{{ route('admin.whatsapp.qr') }}');
-                const data = await res.json();
-                if (data.qr) {
-                    qrImg.src = data.qr;
-                    qrImg.classList.remove('hidden');
-                    qrPH.classList.add('hidden');
-                    statusEl.textContent = 'Awaiting scan';
-                } else {
-                    qrImg.classList.add('hidden');
-                    qrPH.classList.remove('hidden');
-                    statusEl.textContent = data.message || 'Connected';
-                }
-            } catch (e) {
-                statusEl.textContent = 'QR fetch failed';
-            }
-        }
+    <!-- Platform Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Platform Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 border rounded">
+                                <div class="stats-icon me-3" style="width: 40px; height: 40px; font-size: 1rem; background: var(--primary-color);">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Service Requests</h6>
+                                    <p class="text-muted mb-0">{{ $totalRequests ?? 0 }} total</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 border rounded">
+                                <div class="stats-icon me-3" style="width: 40px; height: 40px; font-size: 1rem; background: var(--success-color);">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Completed Jobs</h6>
+                                    <p class="text-muted mb-0">{{ $completedJobs ?? 0 }} total</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 border rounded">
+                                <div class="stats-icon me-3" style="width: 40px; height: 40px; font-size: 1rem; background: var(--info-color);">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Average Rating</h6>
+                                    <p class="text-muted mb-0">{{ number_format($averageRating ?? 0, 1) }} / 5.0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 border rounded">
+                                <div class="stats-icon me-3" style="width: 40px; height: 40px; font-size: 1rem; background: var(--warning-color);">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Coverage Areas</h6>
+                                    <p class="text-muted mb-0">{{ $totalCoverageAreas ?? 0 }} total</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>
+                        Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        @if(isset($recentActivity) && count($recentActivity) > 0)
+                            @foreach($recentActivity->take(5) as $activity)
+                                <div class="timeline-item mb-3">
+                                    <div class="d-flex">
+                                        <div class="timeline-icon me-3">
+                                            <i class="fas fa-circle text-primary" style="font-size: 0.5rem;"></i>
+                                        </div>
+                                        <div>
+                                            <p class="mb-1 small">{{ $activity->description ?? 'Activity' }}</p>
+                                            <small class="text-muted">{{ $activity->created_at?->diffForHumans() ?? 'Recently' }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="text-center py-3">
+                                <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                                <p class="text-muted small">No recent activity</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        async function getStatus() {
-            try {
-                const res = await fetch('{{ route('admin.whatsapp.status') }}');
-                const data = await res.json();
-                statusEl.textContent = data.status || 'Unknown';
-            } catch (e) {
-                statusEl.textContent = 'Status check failed';
-            }
-        }
-
-        document.getElementById('btn-refresh-qr')?.addEventListener('click', getQR);
-        document.getElementById('btn-check-status')?.addEventListener('click', getStatus);
-
-        // initial load
-        getQR();
-        getStatus();
-    </script>
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('admin.whatsapp') }}" class="btn btn-outline-success">
+                            <i class="fab fa-whatsapp me-2"></i>
+                            WhatsApp Management
+                        </a>
+                        <a href="{{ route('admin.flows.index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-project-diagram me-2"></i>
+                            Manage Flows
+                        </a>
+                        <a href="{{ route('plumbers.index') }}" class="btn btn-outline-info">
+                            <i class="fas fa-user-tie me-2"></i>
+                            Manage Plumbers
+                        </a>
+                        <a href="{{ route('clients.index') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-users me-2"></i>
+                            Manage Clients
+                        </a>
+                        <a href="{{ route('admin.requests.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-tools me-2"></i>
+                            Service Requests
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        System Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Platform Version</p>
+                            <p class="fw-semibold">v1.0.0</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Last Updated</p>
+                            <p class="fw-semibold">{{ now()->format('M d, Y') }}</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Database Status</p>
+                            <p class="fw-semibold text-success">Connected</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">WhatsApp Bot</p>
+                            <p class="fw-semibold text-success">Active</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Payment Gateway</p>
+                            <p class="fw-semibold text-success">Mollie</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Environment</p>
+                            <p class="fw-semibold">{{ config('app.env') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
+
+@push('styles')
+<style>
+    .timeline {
+        position: relative;
+    }
+    
+    .timeline-item {
+        position: relative;
+    }
+    
+    .timeline-icon {
+        position: relative;
+        top: 0.25rem;
+    }
+</style>
+@endpush

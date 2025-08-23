@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\{User, WaLog, WaSession, WaRequest, WaOffer};
+use App\Models\{User, WaLog, WaSession, WaRequest, WaOffer, WaFlow, WaNode};
 
 class WaRuntimeController extends Controller
 {
@@ -27,7 +27,8 @@ class WaRuntimeController extends Controller
         $user = User::where('whatsapp_number', $from)->first();
 
         if (!$user) {
-            return $this->replyText($from, "This WhatsApp number is not registered. Please create your account at loodgieter.app");
+            // Handle unregistered user flow
+            return $this->handleDynamicFlow($from, $text, null, 'unregistered_flow', 'U0');
         }
 
         // Get or create session
@@ -35,11 +36,14 @@ class WaRuntimeController extends Controller
         
         if (!$session) {
             // Start new session based on user role
+            $flowCode = $user->role === 'client' ? 'client_flow' : 'plumber_flow';
+            $startNode = $user->role === 'client' ? 'C0' : 'P0';
+            
             $session = WaSession::create([
                 'wa_number' => $from,
                 'user_id' => $user->id,
-                'flow_code' => $user->role === 'client' ? 'customer_flow' : 'plumber_flow',
-                'node_code' => $user->role === 'client' ? 'C0' : 'P0',
+                'flow_code' => $flowCode,
+                'node_code' => $startNode,
                 'context_json' => [],
                 'last_message_at' => $now,
             ]);
@@ -57,11 +61,14 @@ class WaRuntimeController extends Controller
             }
             
             // Create new session
+            $flowCode = $user->role === 'client' ? 'client_flow' : 'plumber_flow';
+            $startNode = $user->role === 'client' ? 'C0' : 'P0';
+            
             $session = WaSession::create([
                 'wa_number' => $from,
                 'user_id' => $user->id,
-                'flow_code' => $user->role === 'client' ? 'customer_flow' : 'plumber_flow',
-                'node_code' => $user->role === 'client' ? 'C0' : 'P0',
+                'flow_code' => $flowCode,
+                'node_code' => $startNode,
                 'context_json' => [],
                 'last_message_at' => $now,
             ]);
@@ -72,155 +79,53 @@ class WaRuntimeController extends Controller
             return $this->showOffersList($from, $user, $session);
         }
 
-        // Handle flow based on user role
+        // Handle dynamic flow based on user role
         if ($user->role === 'client') {
-            return $this->handleCustomerFlow($from, $text, $user, $session);
+            return $this->handleDynamicFlow($from, $text, $user, 'client_flow', $session->node_code, $session);
         } else {
-            return $this->handlePlumberFlow($from, $text, $user, $session);
+            return $this->handleDynamicFlow($from, $text, $user, 'plumber_flow', $session->node_code, $session);
         }
     }
 
-    private function handleCustomerFlow($from, $text, $user, $session)
+    private function handleDynamicFlow($from, $text, $user, $flowCode, $nodeCode, $session = null)
     {
-        $ctx = $session->context_json ?? [];
-        $nodeCode = $session->node_code;
+        // Get the flow and current node
+        $flow = WaFlow::where('code', $flowCode)->where('is_active', true)->first();
+        if (!$flow) {
+            return $this->replyText($from, "Flow not found or inactive.");
+        }
 
+        $node = WaNode::where('flow_id', $flow->id)
+                     ->where('code', $nodeCode)
+                     ->first();
+        
+        if (!$node) {
+            return $this->replyText($from, "Node not found.");
+        }
+
+        $ctx = $session ? ($session->context_json ?? []) : [];
+
+        // Handle special nodes that need custom logic
         switch ($nodeCode) {
-            case 'C0': // Greeting / Address confirmation
-                if ($text === 'yes' || $text === '1') {
-                    $session->node_code = 'C1';
-                    $session->context_json = $ctx;
-                    $session->save();
-                    return $this->sendButtons($from, [
-                        'body' => "What's the problem?\n\nPlease select a number:\n1) Leak\n2) Blockage / Drain\n3) Heating / Boiler\n4) Installation / Replacement\n5) Other",
-                        'options' => [
-                            ['id' => 'leak', 'text' => '1) Leak'],
-                            ['id' => 'blockage', 'text' => '2) Blockage / Drain'],
-                            ['id' => 'heating', 'text' => '3) Heating / Boiler'],
-                            ['id' => 'installation', 'text' => '4) Installation / Replacement'],
-                            ['id' => 'other', 'text' => '5) Other']
-                        ]
-                    ]);
-                } elseif ($text === 'no' || $text === '2') {
-                    $session->delete();
-                    return $this->replyText($from, "Okay, canceled for now. Type start anytime to create a new request.");
-                } else {
-                    return $this->sendButtons($from, [
-                        'body' => "Hi " . explode(' ', $user->full_name)[0] . "!\nDo you want plumber service at {$user->address}, {$user->postal_code} {$user->city}?\n\nPlease select:\n1) Yes\n2) No",
-                        'options' => [
-                            ['id' => 'yes', 'text' => '1) Yes'],
-                            ['id' => 'no', 'text' => '2) No']
-                        ]
-                    ]);
-                }
-
-            case 'C1': // Problem type
-                $problemMap = [
-                    'leak' => 'Leak',
-                    'blockage' => 'Blockage / Drain',
-                    'heating' => 'Heating / Boiler',
-                    'installation' => 'Installation / Replacement',
-                    'other' => 'Other',
-                    '1' => 'Leak',
-                    '2' => 'Blockage / Drain',
-                    '3' => 'Heating / Boiler',
-                    '4' => 'Installation / Replacement',
-                    '5' => 'Other'
-                ];
-
-                if (isset($problemMap[$text])) {
-                    $ctx['problem'] = $problemMap[$text];
-                    $session->node_code = 'C2';
-                    $session->context_json = $ctx;
-                    $session->save();
-                    return $this->sendButtons($from, [
-                        'body' => "How urgent is it?",
-                        'options' => [
-                            ['id' => 'high', 'text' => 'High — max 60 min'],
-                            ['id' => 'normal', 'text' => 'Normal — max 2 hours'],
-                            ['id' => 'later', 'text' => 'Later today / schedule']
-                        ]
-                    ]);
-                } else {
-                    return $this->sendButtons($from, [
-                        'body' => "What's the problem?\n\nPlease select a number:\n1) Leak\n2) Blockage / Drain\n3) Heating / Boiler\n4) Installation / Replacement\n5) Other",
-                        'options' => [
-                            ['id' => 'leak', 'text' => '1) Leak'],
-                            ['id' => 'blockage', 'text' => '2) Blockage / Drain'],
-                            ['id' => 'heating', 'text' => '3) Heating / Boiler'],
-                            ['id' => 'installation', 'text' => '4) Installation / Replacement'],
-                            ['id' => 'other', 'text' => '5) Other']
-                        ]
-                    ]);
-                }
-
-            case 'C2': // Urgency
-                $urgencyMap = [
-                    'high' => 'High — max 60 min',
-                    'normal' => 'Normal — max 2 hours',
-                    'later' => 'Later today / schedule',
-                    '1' => 'High — max 60 min',
-                    '2' => 'Normal — max 2 hours',
-                    '3' => 'Later today / schedule'
-                ];
-
-                if (isset($urgencyMap[$text])) {
-                    $ctx['urgency'] = $text;
-                    $ctx['urgency_label'] = $urgencyMap[$text];
-                    $session->node_code = 'C3';
-                    $session->context_json = $ctx;
-                    $session->save();
-                    return $this->replyText($from, "Please describe the problem in 1–2 sentences.\nYou may add a photo or video.");
-                } else {
-                    return $this->sendButtons($from, [
-                        'body' => "How urgent is it?\n\nPlease select a number:\n1) High — max 60 min\n2) Normal — max 2 hours\n3) Later today / schedule",
-                        'options' => [
-                            ['id' => 'high', 'text' => '1) High — max 60 min'],
-                            ['id' => 'normal', 'text' => '2) Normal — max 2 hours'],
-                            ['id' => 'later', 'text' => '3) Later today / schedule']
-                        ]
-                    ]);
-                }
-
-            case 'C3': // Short description
-                $ctx['description'] = $text;
-                $session->node_code = 'C4';
-                $session->context_json = $ctx;
-                $session->save();
-                return $this->sendButtons($from, [
-                    'body' => "Do you want me to send this request to available plumbers near you?",
-                    'options' => [
-                        ['id' => 'yes', 'text' => 'Yes, send to all available'],
-                        ['id' => 'no', 'text' => 'No, cancel']
-                    ]
-                ]);
-
             case 'C4': // Consent to broadcast
                 if ($text === 'yes' || $text === '1') {
-                    $session->node_code = 'C5';
-                    $session->context_json = $ctx;
-                    $session->save();
-                    
                     // Create request and broadcast to plumbers
                     $this->createAndBroadcastRequest($user, $ctx);
                     
-                    // Update session with request ID
-                    $session->context_json = $ctx;
-                    $session->save();
+                    // Move to next node
+                    $nextNode = $this->getNextNode($node, $text);
+                    if ($session && $nextNode) {
+                        $session->node_code = $nextNode->code;
+                        $session->context_json = $ctx;
+                        $session->save();
+                    }
                     
                     return $this->replyText($from, "Got it. I'm notifying nearby plumbers now. You'll receive options as they accept.\nYou can reply help for commands.");
                 } elseif ($text === 'no' || $text === '2') {
-                    $session->delete();
+                    if ($session) $session->delete();
                     return $this->replyText($from, "Request canceled. Type start to try again.");
-                } else {
-                    return $this->sendButtons($from, [
-                        'body' => "Do you want me to send this request to available plumbers near you?\n\nPlease select:\n1) Yes, send to all available\n2) No, cancel",
-                        'options' => [
-                            ['id' => 'yes', 'text' => '1) Yes, send to all available'],
-                            ['id' => 'no', 'text' => '2) No, cancel']
-                        ]
-                    ]);
                 }
+                break;
 
             case 'C5': // Broadcast started - waiting for offers
                 if ($text === 'help') {
@@ -229,6 +134,7 @@ class WaRuntimeController extends Controller
                     // Check for offers and show list
                     return $this->showOffersList($from, $user, $session);
                 }
+                break;
 
             case 'C6': // Offers list
                 if (is_numeric($text)) {
@@ -237,65 +143,44 @@ class WaRuntimeController extends Controller
                 } else {
                     return $this->showOffersList($from, $user, $session);
                 }
+                break;
 
             case 'C7': // Offer details
                 if ($text === 'yes' || $text === '1') {
                     $selectedOfferId = $ctx['selected_offer_id'] ?? null;
                     if ($selectedOfferId) {
                         $this->selectPlumber($user, $selectedOfferId);
-                        $session->node_code = 'C8';
-                        $session->context_json = $ctx;
-                        $session->save();
+                        if ($session) {
+                            $session->node_code = 'C8';
+                            $session->context_json = $ctx;
+                            $session->save();
+                        }
                         return $this->replyText($from, "Great! You selected the plumber.\nI'll share your full address and contact info now and notify other plumbers that the job is taken.");
                     }
                 } elseif ($text === 'no' || $text === '2') {
-                    $session->node_code = 'C6';
-                    $session->context_json = $ctx;
-                    $session->save();
+                    if ($session) {
+                        $session->node_code = 'C6';
+                        $session->context_json = $ctx;
+                        $session->save();
+                    }
                     return $this->showOffersList($from, $user, $session);
                 } elseif ($text === 'choose_again' || $text === '3') {
-                    $session->node_code = 'C6';
-                    $session->context_json = $ctx;
-                    $session->save();
+                    if ($session) {
+                        $session->node_code = 'C6';
+                        $session->context_json = $ctx;
+                        $session->save();
+                    }
                     return $this->showOffersList($from, $user, $session);
-                } else {
-                    return $this->sendButtons($from, [
-                        'body' => "Do you want to select this plumber?",
-                        'options' => [
-                            ['id' => 'yes', 'text' => 'Yes'],
-                            ['id' => 'no', 'text' => 'No'],
-                            ['id' => 'choose_again', 'text' => 'Choose again']
-                        ]
-                    ]);
                 }
+                break;
 
-            case 'C8': // Customer confirms selection
-                $session->node_code = 'C9';
-                $session->context_json = $ctx;
-                $session->save();
-                return $this->replyText($from, "Confirmed. The plumber is on the way.");
-
-            case 'C9': // Post-selection confirmation
-                $session->delete();
-                return $this->replyText($from, "Type start to create a new request, or exit to end the session.");
-
-            default:
-                $session->delete();
-                return $this->replyText($from, "Type start to create a new request.");
-        }
-    }
-
-    private function handlePlumberFlow($from, $text, $user, $session)
-    {
-        $ctx = $session->context_json ?? [];
-        $nodeCode = $session->node_code;
-
-        switch ($nodeCode) {
             case 'P0': // New job broadcast
                 if ($text === 'yes' || $text === '1') {
-                    $session->node_code = 'P1';
-                    $session->context_json = $ctx;
-                    $session->save();
+                    if ($session) {
+                        $session->node_code = 'P1';
+                        $session->context_json = $ctx;
+                        $session->save();
+                    }
                     
                     // Show job details again and ask for personal message
                     $customer = User::find($ctx['customer_id'] ?? null);
@@ -309,44 +194,140 @@ class WaRuntimeController extends Controller
                     
                     return $this->replyText($from, $message);
                 } elseif ($text === 'no' || $text === '2') {
-                    $session->delete();
+                    if ($session) $session->delete();
                     return $this->replyText($from, "No problem. We'll keep sending you nearby requests.");
-                } else {
-                    // Show the job broadcast again
-                    return $this->showJobBroadcast($from, $user, $session);
                 }
+                break;
 
             case 'P1': // After plumber accepts
                 $ctx['personal_message'] = $text;
-                $session->context_json = $ctx;
-                $session->save();
+                if ($session) {
+                    $session->context_json = $ctx;
+                    $session->save();
+                }
                 
                 // Create offer
                 $this->createOffer($user, $ctx);
                 
-                $session->delete();
+                if ($session) $session->delete();
                 return $this->replyText($from, "Thanks! Your offer has been sent to the client. You'll be notified if they choose you.");
-
-            case 'P2': // Plumber chosen
-                $session->delete();
-                return $this->replyText($from, "✅ You were selected for this job!\nPlease proceed. Good luck!");
-
-            case 'P3': // Plumber not chosen
-                $session->delete();
-                return $this->replyText($from, "❌ Someone else was selected. Thanks for responding — next time, be quick!\nWe'll keep sending you nearby requests.");
-
-            case 'P4': // 24h rating request
-                if (is_numeric($text) && $text >= 1 && $text <= 5) {
-                    $session->delete();
-                    return $this->replyText($from, "Thanks! Your rating has been saved.");
-                } else {
-                    return $this->replyText($from, "How did it go with this job? Score 1–5.\nYou can add a short comment if you like.");
-                }
-
-            default:
-                $session->delete();
-                return $this->replyText($from, "Type start to begin.");
+                break;
         }
+
+        // Handle dynamic node processing
+        return $this->processDynamicNode($from, $text, $user, $node, $ctx, $session);
+    }
+
+    private function processDynamicNode($from, $text, $user, $node, $ctx, $session)
+    {
+        $options = $node->options_json ?? [];
+        $nextMap = $node->next_map_json ?? [];
+
+        // Check if input matches any option
+        $matchedOption = null;
+        foreach ($options as $option) {
+            if (isset($option['id']) && $option['id'] === $text) {
+                $matchedOption = $option;
+                break;
+            }
+        }
+
+        // If no direct match, check for numeric input
+        if (!$matchedOption && is_numeric($text)) {
+            $optionIndex = (int) $text - 1;
+            if (isset($options[$optionIndex])) {
+                $matchedOption = $options[$optionIndex];
+            }
+        }
+
+        // If still no match, check for text variations
+        if (!$matchedOption) {
+            foreach ($options as $option) {
+                if (isset($option['variations']) && in_array($text, $option['variations'])) {
+                    $matchedOption = $option;
+                    break;
+                }
+            }
+        }
+
+        // Get next node based on input
+        $nextNode = null;
+        if ($matchedOption && isset($nextMap[$matchedOption['id']])) {
+            $nextNodeCode = $nextMap[$matchedOption['id']];
+            $nextNode = WaNode::where('flow_id', $node->flow_id)
+                             ->where('code', $nextNodeCode)
+                             ->first();
+        } elseif (isset($nextMap['default'])) {
+            $nextNodeCode = $nextMap['default'];
+            $nextNode = WaNode::where('flow_id', $node->flow_id)
+                             ->where('code', $nextNodeCode)
+                             ->first();
+        }
+
+        // Update context with user input
+        if ($matchedOption) {
+            $ctx['last_input'] = $text;
+            $ctx['last_option'] = $matchedOption;
+        }
+
+        // Update session
+        if ($session && $nextNode) {
+            $session->node_code = $nextNode->code;
+            $session->context_json = $ctx;
+            $session->save();
+        }
+
+        // Send response based on node type
+        return $this->sendNodeResponse($from, $nextNode ?: $node, $ctx);
+    }
+
+    private function sendNodeResponse($from, $node, $ctx)
+    {
+        $body = $this->replaceVariables($node->body, $ctx);
+        
+        switch ($node->type) {
+            case 'buttons':
+                $options = $node->options_json ?? [];
+                return $this->sendButtons($from, [
+                    'body' => $body,
+                    'options' => $options
+                ]);
+            
+            case 'list':
+                $options = $node->options_json ?? [];
+                return $this->sendList($from, [
+                    'title' => $node->title,
+                    'body' => $body,
+                    'options' => $options
+                ]);
+            
+            case 'text':
+            default:
+                return $this->replyText($from, $body);
+        }
+    }
+
+    private function replaceVariables($text, $ctx)
+    {
+        // Replace variables in text like {{variable_name}}
+        return preg_replace_callback('/\{\{(\w+)\}\}/', function($matches) use ($ctx) {
+            $varName = $matches[1];
+            return $ctx[$varName] ?? $matches[0];
+        }, $text);
+    }
+
+    private function getNextNode($currentNode, $input)
+    {
+        $nextMap = $currentNode->next_map_json ?? [];
+        
+        if (isset($nextMap[$input])) {
+            $nextNodeCode = $nextMap[$input];
+            return WaNode::where('flow_id', $currentNode->flow_id)
+                        ->where('code', $nextNodeCode)
+                        ->first();
+        }
+        
+        return null;
     }
 
     private function showMenu($from, $user, $session)
@@ -546,9 +527,11 @@ class WaRuntimeController extends Controller
 
         $message .= "\nType the number to see details, or wait for more options.";
 
-        $session->node_code = 'C6';
-        $session->context_json = ['offers' => $offers->pluck('id')->toArray()];
-        $session->save();
+        if ($session) {
+            $session->node_code = 'C6';
+            $session->context_json = ['offers' => $offers->pluck('id')->toArray()];
+            $session->save();
+        }
 
         return $this->replyText($from, $message);
     }
@@ -569,11 +552,13 @@ class WaRuntimeController extends Controller
             $message .= "Rating: ⭐ 4.5\n";
             $message .= "Message to you: \"{$offer->personal_message}\"";
 
-            $ctx = $session->context_json ?? [];
-            $ctx['selected_offer_id'] = $offer->id;
-            $session->node_code = 'C7';
-            $session->context_json = $ctx;
-            $session->save();
+            if ($session) {
+                $ctx = $session->context_json ?? [];
+                $ctx['selected_offer_id'] = $offer->id;
+                $session->node_code = 'C7';
+                $session->context_json = $ctx;
+                $session->save();
+            }
 
             return $this->sendButtons($from, [
                 'body' => $message,

@@ -1,139 +1,262 @@
-@extends('layouts.app')
+@extends('layouts.modern-dashboard')
 
 @section('title', 'Plumbers')
 
-@section('header')
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Plumbers</h1>
-            <p class="text-sm text-gray-600">Manage all plumbers, their service areas, categories, and availability.</p>
-        </div>
-        <a href="{{ route('plumbers.create') }}"
-           class="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700">
-            Add Plumber
+@section('page-title', 'Plumbers')
+
+@section('sidebar-nav')
+    <div class="nav-item">
+        <a href="{{ route('admin.dashboard') }}" class="nav-link">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.whatsapp') }}" class="nav-link">
+            <i class="fab fa-whatsapp"></i>
+            <span>WhatsApp</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.flows.index') }}" class="nav-link">
+            <i class="fas fa-project-diagram"></i>
+            <span>WhatsApp Flows</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('plumbers.index') }}" class="nav-link active">
+            <i class="fas fa-user-tie"></i>
+            <span>Plumbers</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('clients.index') }}" class="nav-link">
+            <i class="fas fa-users"></i>
+            <span>Clients</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.requests.index') }}" class="nav-link">
+            <i class="fas fa-tools"></i>
+            <span>Service Requests</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('support') }}" class="nav-link">
+            <i class="fas fa-headset"></i>
+            <span>Support</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('profile.edit') }}" class="nav-link">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
         </a>
     </div>
 @endsection
 
 @section('content')
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1">Plumbers</h4>
+                    <p class="text-muted mb-0">Manage all plumbers, their service areas, categories, and availability.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary fs-6">{{ $plumbers->total() ?? 0 }} Total Plumbers</span>
+                    <a href="{{ route('plumbers.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Add Plumber
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if (session('success'))
-        <div class="mb-4 rounded-md bg-green-50 p-4 ring-1 ring-green-600/20 text-green-800">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
+    
     @if (session('error'))
-        <div class="mb-4 rounded-md bg-red-50 p-4 ring-1 ring-red-600/20 text-red-800">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-gray-600">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone / WhatsApp</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Postal Areas</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tariff</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categories</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-3"></th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-100">
-                @forelse($plumbers as $plumber)
-                    @php
-                        // User
-                        $u = $plumber->user ?? null;
-                        $name = $u->full_name ?? $u->name ?? '—';
-                        $phone = $u->phone ?? '—';
-                        $wa = $u->whatsapp_number ?? '—';
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Service Areas</th>
+                            <th>Tariff</th>
+                            <th>Categories</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($plumbers as $plumber)
+                            @php
+                                // User
+                                $u = $plumber->user ?? null;
+                                $name = $u->full_name ?? $u->name ?? '—';
+                                $phone = $u->phone ?? '—';
+                                $wa = $u->whatsapp_number ?? '—';
 
-                        // Postal areas (string, array or relation)
-                        $areas = $plumber->postal_codes ?? $plumber->municipalities ?? null;
-                        if (is_array($areas)) {
-                            $areasText = implode(', ', $areas);
-                        } elseif (is_string($areas)) {
-                            $areasText = $areas;
-                        } else {
-                            // if you have a relation like $plumber->postalCodes, show first few
-                            $areasText = method_exists($plumber, 'postalCodes')
-                                ? $plumber->postalCodes->pluck('Postcode')->take(3)->implode(', ') .
-                                  ($plumber->postalCodes->count() > 3 ? ' +' . ($plumber->postalCodes->count() - 3) . ' more' : '')
-                                : '—';
-                        }
+                                // Postal areas (string, array or relation)
+                                $areas = $plumber->postal_codes ?? $plumber->municipalities ?? null;
+                                if (is_array($areas)) {
+                                    $areasText = implode(', ', $areas);
+                                } elseif (is_string($areas)) {
+                                    $areasText = $areas;
+                                } else {
+                                    // if you have a relation like $plumber->postalCodes, show first few
+                                    $areasText = method_exists($plumber, 'postalCodes')
+                                        ? $plumber->postalCodes->pluck('Postcode')->take(3)->implode(', ') .
+                                          ($plumber->postalCodes->count() > 3 ? ' +' . ($plumber->postalCodes->count() - 3) . ' more' : '')
+                                        : '—';
+                                }
 
-                        // Tariff
-                        $tariff = $plumber->tariff ? '€' . number_format((float)$plumber->tariff, 2) : '—';
+                                // Tariff
+                                $tariff = $plumber->tariff ? '€' . number_format((float)$plumber->tariff, 2) : '—';
 
-                        // Categories (JSON of names, or pivot)
-                        $catsRaw = $plumber->service_categories ?? null;
-                        if (is_string($catsRaw)) {
-                            $decoded = json_decode($catsRaw, true);
-                            $categories = is_array($decoded) ? implode(', ', $decoded) : $catsRaw;
-                        } elseif (is_array($catsRaw)) {
-                            $categories = implode(', ', $catsRaw);
-                        } elseif (method_exists($plumber, 'categories')) {
-                            $categories = $plumber->categories->pluck('name')->implode(', ');
-                        } else {
-                            $categories = '—';
-                        }
+                                // Categories (JSON of names, or pivot)
+                                $catsRaw = $plumber->service_categories ?? null;
+                                if (is_string($catsRaw)) {
+                                    $decoded = json_decode($catsRaw, true);
+                                    $categories = is_array($decoded) ? implode(', ', $decoded) : $catsRaw;
+                                } elseif (is_array($catsRaw)) {
+                                    $categories = implode(', ', $catsRaw);
+                                } elseif (method_exists($plumber, 'categories')) {
+                                    $categories = $plumber->categories->pluck('name')->implode(', ');
+                                } else {
+                                    $categories = '—';
+                                }
 
-                        // Status badge
-                        $status = $plumber->availability_status ?? 'unknown';
-                        $badgeClasses = match($status) {
-                            'available' => 'bg-green-100 text-green-800 ring-green-600/20',
-                            'busy', 'holiday' => 'bg-red-100 text-red-800 ring-red-600/20',
-                            default => 'bg-gray-100 text-gray-800 ring-gray-600/20'
-                        };
-                        $statusLabel = $status === 'available' ? 'Available' :
-                                       (in_array($status, ['busy','holiday']) ? 'Not working' : 'Unknown');
-                    @endphp
+                                // Status badge
+                                $status = $plumber->availability_status ?? 'unknown';
+                                $statusLabel = $status === 'available' ? 'Available' :
+                                               (in_array($status, ['busy','holiday']) ? 'Not working' : 'Unknown');
+                            @endphp
 
-                    <tr>
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ $name }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">
-                            <div class="text-gray-900">{{ $phone }}</div>
-                            <div class="text-gray-500 text-xs">WA: {{ $wa }}</div>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-700">{{ $areasText }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ $tariff }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">{{ $categories }}</td>
-                        <td class="px-4 py-3 text-sm">
-                            <span class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ring-1 ring-inset {{ $badgeClasses }}">
-                                @if ($status === 'available')
-                                    <span class="h-2 w-2 rounded-full bg-green-500"></span>
-                                @elseif (in_array($status, ['busy','holiday']))
-                                    <span class="h-2 w-2 rounded-full bg-red-500"></span>
-                                @else
-                                    <span class="h-2 w-2 rounded-full bg-gray-400"></span>
-                                @endif
-                                {{ $statusLabel }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-right text-sm whitespace-nowrap">
-                            <a href="{{ route('plumbers.show', $plumber) }}" class="text-blue-600 hover:underline">View</a>
-                            <span class="text-gray-300 mx-1">|</span>
-                            <a href="{{ route('plumbers.edit', $plumber) }}" class="text-cyan-600 hover:underline">Edit</a>
-                            <span class="text-gray-300 mx-1">|</span>
-                            <form action="{{ route('plumbers.destroy', $plumber) }}" method="POST" class="inline"
-                                  onsubmit="return confirm('Delete this plumber?')">
-                                @csrf @method('DELETE')
-                                <button class="text-red-600 hover:underline" type="submit">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td class="px-4 py-6 text-sm text-gray-500" colspan="7">No plumbers found.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            <tr>
+                                <td>
+                                    <div class="fw-medium">{{ $name }}</div>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        @if($phone !== '—')
+                                            <div>
+                                                <i class="fas fa-phone me-1 text-muted"></i>
+                                                <a href="tel:{{ $phone }}" class="text-decoration-none">{{ $phone }}</a>
+                                            </div>
+                                        @endif
+                                        @if($wa !== '—')
+                                            <div>
+                                                <i class="fab fa-whatsapp me-1 text-success"></i>
+                                                <a href="https://wa.me/{{ $wa }}" target="_blank" class="text-decoration-none">{{ $wa }}</a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small text-muted" style="max-width: 200px;">
+                                        {{ $areasText }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-medium">{{ $tariff }}</span>
+                                </td>
+                                <td>
+                                    <div class="small text-muted" style="max-width: 150px;">
+                                        {{ $categories }}
+                                    </div>
+                                </td>
+                                <td>
+                                    @if($status === 'available')
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
+                                            {{ $statusLabel }}
+                                        </span>
+                                    @elseif(in_array($status, ['busy','holiday']))
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
+                                            {{ $statusLabel }}
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
+                                            {{ $statusLabel }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('plumbers.show', $plumber) }}" 
+                                           class="btn btn-outline-primary btn-sm" 
+                                           title="View Plumber">
+                                            <i class="fas fa-eye me-1"></i>
+                                            View
+                                        </a>
+                                        <a href="{{ route('plumbers.edit', $plumber) }}" 
+                                           class="btn btn-outline-secondary btn-sm" 
+                                           title="Edit Plumber">
+                                            <i class="fas fa-edit me-1"></i>
+                                            Edit
+                                        </a>
+                                        <form action="{{ route('plumbers.destroy', $plumber) }}" 
+                                              method="POST" 
+                                              class="d-inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this plumber?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" 
+                                                    class="btn btn-outline-danger btn-sm" 
+                                                    title="Delete Plumber">
+                                                <i class="fas fa-trash me-1"></i>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-user-tie fa-2x mb-2"></i>
+                                        <p>No plumbers found.</p>
+                                        <a href="{{ route('plumbers.create') }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus me-1"></i>
+                                            Add First Plumber
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     @if(method_exists($plumbers, 'links'))
-        <div class="mt-4">
+        <div class="d-flex justify-content-center mt-4">
             {{ $plumbers->links() }}
         </div>
     @endif

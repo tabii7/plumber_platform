@@ -23,47 +23,34 @@ class WhatsAppService
     public function sendMessage($phoneNumber, $message)
     {
         try {
-            // For now, we'll log the message since we don't have a WhatsApp API configured
-            // In production, you would integrate with WhatsApp Business API or a service like Twilio
-            Log::info('WhatsApp message would be sent', [
-                'to' => $phoneNumber,
-                'message' => $message,
-                'timestamp' => now()
-            ]);
-
-            // Example of how you might integrate with a real WhatsApp API:
-            /*
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->post($this->apiUrl . '/messages', [
-                'to' => $phoneNumber,
-                'message' => $message,
-                'type' => 'text'
+            // Send message through our WhatsApp bot API
+            $response = Http::post('http://127.0.0.1:3000/send-message', [
+                'number' => $phoneNumber,
+                'message' => $message
             ]);
 
             if ($response->successful()) {
                 Log::info('WhatsApp message sent successfully', [
                     'to' => $phoneNumber,
-                    'response' => $response->json()
+                    'response' => $response->json(),
+                    'timestamp' => now()
                 ]);
                 return true;
             } else {
                 Log::error('Failed to send WhatsApp message', [
                     'to' => $phoneNumber,
-                    'response' => $response->json(),
-                    'status' => $response->status()
+                    'response' => $response->body(),
+                    'status' => $response->status(),
+                    'timestamp' => now()
                 ]);
                 return false;
             }
-            */
-
-            return true; // For now, always return true since we're just logging
         } catch (\Exception $e) {
             Log::error('Error sending WhatsApp message', [
                 'to' => $phoneNumber,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'timestamp' => now()
             ]);
             return false;
         }

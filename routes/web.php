@@ -109,6 +109,8 @@ Route::middleware(['auth'])->group(function () {
     // AJAX helpers
     Route::get('/municipalities/search',   [PlumberCoverageController::class, 'searchMunicipalities'])->name('municipalities.search');
     Route::get('/municipalities/{name}/towns', [PlumberCoverageController::class, 'municipalityTowns'])->name('municipalities.towns');
+    Route::get('/municipalities/nearby',   [PlumberCoverageController::class, 'nearbyMunicipalities'])->name('municipalities.nearby');
+    Route::post('/plumber/coverage/bulk',  [PlumberCoverageController::class, 'bulkStore'])->name('plumber.coverage.bulk');
 
 
      Route::get('/plumber/categories', [PlumberCategoryController::class, 'edit'])
@@ -173,6 +175,6 @@ Route::post('/checkout/webhook', [App\Http\Controllers\CheckoutController::class
 // Support page for WhatsApp menu
 Route::get('/support', function () {
     return view('support');
-})->name('support');
+})->middleware(['auth'])->name('support');
 
 

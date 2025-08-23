@@ -14,29 +14,35 @@ class CheckoutController extends Controller
         
         // Define subscription plans
         $plans = [
+            'one_time' => [
+                'name' => 'One Time Request',
+                'price' => 25.00,
+                'currency' => 'EUR',
+                'description' => 'One-time plumber service request'
+            ],
             'client_monthly' => [
                 'name' => 'Client Monthly',
-                'price' => 19.99,
+                'price' => 9.99,
                 'currency' => 'EUR',
                 'description' => 'Client subscription - Monthly plan'
             ],
             'client_yearly' => [
                 'name' => 'Client Yearly',
-                'price' => 119.88,
+                'price' => 99.00,
                 'currency' => 'EUR',
-                'description' => 'Client subscription - Yearly plan (50% off)'
+                'description' => 'Client subscription - Yearly plan (2 months free)'
             ],
             'company_monthly' => [
                 'name' => 'Company Monthly',
-                'price' => 29.99,
+                'price' => 24.99,
                 'currency' => 'EUR',
                 'description' => 'Company subscription - Monthly plan'
             ],
             'company_yearly' => [
                 'name' => 'Company Yearly',
-                'price' => 179.88,
+                'price' => 299.00,
                 'currency' => 'EUR',
-                'description' => 'Company subscription - Yearly plan (50% off)'
+                'description' => 'Company subscription - Yearly plan (2 months free)'
             ]
         ];
 
@@ -107,9 +113,19 @@ class CheckoutController extends Controller
         if ($payment->isPaid()) {
             // Update user subscription
             $user = Auth::user();
-            $user->subscription_plan = $plan;
-            $user->subscription_status = 'active';
-            $user->subscription_ends_at = $this->calculateSubscriptionEndDate($plan);
+            
+            if ($plan === 'one_time') {
+                // For one-time requests, just mark as paid without subscription
+                $user->subscription_plan = 'one_time';
+                $user->subscription_status = 'active';
+                $user->subscription_ends_at = now()->addDays(30); // 30 days to use the service
+            } else {
+                // For subscription plans
+                $user->subscription_plan = $plan;
+                $user->subscription_status = 'active';
+                $user->subscription_ends_at = $this->calculateSubscriptionEndDate($plan);
+            }
+            
             $user->save();
 
             return view('checkout.success', [
@@ -149,9 +165,17 @@ class CheckoutController extends Controller
             if ($userId && $plan) {
                 $user = \App\Models\User::find($userId);
                 if ($user) {
-                    $user->subscription_plan = $plan;
-                    $user->subscription_status = 'active';
-                    $user->subscription_ends_at = $this->calculateSubscriptionEndDate($plan);
+                    if ($plan === 'one_time') {
+                        // For one-time requests, just mark as paid without subscription
+                        $user->subscription_plan = 'one_time';
+                        $user->subscription_status = 'active';
+                        $user->subscription_ends_at = now()->addDays(30); // 30 days to use the service
+                    } else {
+                        // For subscription plans
+                        $user->subscription_plan = $plan;
+                        $user->subscription_status = 'active';
+                        $user->subscription_ends_at = $this->calculateSubscriptionEndDate($plan);
+                    }
                     $user->save();
                 }
             }

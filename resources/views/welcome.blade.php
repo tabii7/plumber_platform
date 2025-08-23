@@ -480,13 +480,10 @@
                 </ul>
                 
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#pricing">Pricing</a>
+                    </li>
                     @guest
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url('/register') }}">Register</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url('/login') }}">Login</a>
-                        </li>
                         <li class="nav-item ms-2">
                             <a href="{{ url('/register') }}" class="btn btn-primary">Get Started</a>
                         </li>
@@ -525,19 +522,16 @@
                         <p class="hero-subtitle">Reliable, licensed plumbers available 24/7 for all your plumbing needs. Emergency repairs, installations, and maintenance with guaranteed quality.</p>
                         
                         <div class="d-flex flex-wrap gap-3 mb-4">
+                            <a href="#pricing" class="btn btn-primary btn-lg">
+                                <i class="fas fa-crown me-2"></i>View Pricing Plans
+                            </a>
                             @guest
                                 <a href="{{ url('/register') }}" class="btn btn-outline btn-lg">
-                                    <i class="fas fa-user-plus me-2"></i>Register Now
-                                </a>
-                                <a href="{{ url('/login') }}" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                    <i class="fas fa-user-plus me-2"></i>Get Started
                                 </a>
                             @else
-                                <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg">
+                                <a href="{{ route('dashboard') }}" class="btn btn-outline btn-lg">
                                     <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
-                                </a>
-                                <a href="#pricing" class="btn btn-outline btn-lg">
-                                    <i class="fas fa-crown me-2"></i>View Plans
                                 </a>
                             @endguest
                         </div>
@@ -732,17 +726,44 @@
     </div>
 
     <div class="row justify-content-center g-4">
+      <!-- One Time Request -->
+      <div class="col-lg-3 col-md-6">
+        <div class="pricing-card">
+          <div class="pricing-icon"><i class="fas fa-bolt"></i></div>
+          <h3>One Time Request</h3>
+
+          <div class="pricing-price mb-3">
+            <div class="current-price">€25</div>
+            <div class="period">one-time</div>
+          </div>
+
+          <div class="pricing-features mb-4" style="text-align:left">
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Single plumber request</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Instant WhatsApp contact</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>24/7 emergency service</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>No subscription required</li>
+            </ul>
+          </div>
+
+          <a href="{{ route('checkout', ['plan' => 'one_time']) }}"
+             class="btn btn-primary btn-lg w-100">
+            Get Service Now
+          </a>
+        </div>
+      </div>
+
       <!-- Client Plan -->
-      <div class="col-lg-4 col-md-6">
+      <div class="col-lg-3 col-md-6">
         <div class="pricing-card">
           <div class="pricing-icon"><i class="fas fa-home"></i></div>
           <h3>Client Plan</h3>
 
           <div class="pricing-price mb-3">
-            <div class="current-price">€19.99</div>
+            <div class="current-price">€9.99</div>
             <div class="period">/month</div>
-            <div class="original-price">€26.99</div>
-            <span class="discount-badge">25% OFF</span>
+            <div class="original-price">€14.99</div>
+            <span class="discount-badge">33% OFF</span>
           </div>
 
           <div class="pricing-features mb-4" style="text-align:left">
@@ -751,29 +772,36 @@
               <li class="mb-2"><i class="fas fa-check me-2"></i>Instant WhatsApp contact</li>
               <li class="mb-2"><i class="fas fa-check me-2"></i>Save favorite plumbers</li>
               <li class="mb-2"><i class="fas fa-check me-2"></i>24/7 support</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>€99/year (2 months free)</li>
             </ul>
           </div>
 
-          <a href="{{ route('checkout', ['plan' => 'client_monthly']) }}"
-             class="btn btn-primary btn-lg w-100">
-            Get Started
-          </a>
+          <div class="d-grid gap-2">
+            <a href="{{ route('checkout', ['plan' => 'client_monthly']) }}"
+               class="btn btn-primary">
+              Monthly - €9.99
+            </a>
+            <a href="{{ route('checkout', ['plan' => 'client_yearly']) }}"
+               class="btn btn-outline-primary">
+              Yearly - €99 (Save €20)
+            </a>
+          </div>
         </div>
       </div>
 
       <!-- Company Plan (Featured) -->
-      <div class="col-lg-4 col-md-6">
+      <div class="col-lg-3 col-md-6">
         <div class="pricing-card featured">
           <div class="featured-badge">MOST POPULAR</div>
           <div class="pricing-icon"><i class="fas fa-building"></i></div>
           <h3>Company Plan</h3>
 
           <div class="pricing-price mb-3">
-            <div class="current-price">€29.99</div>
+            <div class="current-price">€24.99</div>
             <div class="period">/month</div>
             <div class="yearly-price">
-              <div>€179.88/year</div>
-              <div>Save 50% until Sept 30</div>
+              <div>€299/year</div>
+              <div>2 months free</div>
             </div>
           </div>
 
@@ -783,18 +811,25 @@
               <li class="mb-2"><i class="fas fa-check me-2"></i>Team member accounts</li>
               <li class="mb-2"><i class="fas fa-check me-2"></i>Priority support</li>
               <li class="mb-2"><i class="fas fa-check me-2"></i>Access to verified plumbers</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Advanced analytics</li>
             </ul>
           </div>
 
-          <a href="{{ route('checkout', ['plan' => 'company_monthly']) }}"
-             class="btn btn-primary btn-lg w-100">
-            Get Started
-          </a>
+          <div class="d-grid gap-2">
+            <a href="{{ route('checkout', ['plan' => 'company_monthly']) }}"
+               class="btn btn-primary">
+              Monthly - €24.99
+            </a>
+            <a href="{{ route('checkout', ['plan' => 'company_yearly']) }}"
+               class="btn btn-outline-primary">
+              Yearly - €299 (Save €60)
+            </a>
+          </div>
         </div>
       </div>
 
       <!-- Plumber Plan -->
-      <div class="col-lg-4 col-md-6">
+      <div class="col-lg-3 col-md-6">
         <div class="pricing-card">
           <div class="pricing-icon"><i class="fas fa-tools"></i></div>
           <h3>Plumber Plan</h3>
@@ -810,6 +845,7 @@
               <li class="mb-2"><i class="fas fa-check me-2"></i>Set service radius</li>
               <li class="mb-2"><i class="fas fa-check me-2"></i>Receive unlimited requests</li>
               <li class="mb-2"><i class="fas fa-check me-2"></i>Direct WhatsApp contact</li>
+              <li class="mb-2"><i class="fas fa-check me-2"></i>Earn money from jobs</li>
             </ul>
           </div>
 

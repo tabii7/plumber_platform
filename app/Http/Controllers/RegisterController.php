@@ -52,15 +52,33 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        // Send welcome notification via email
-        $user->notify(new WelcomeNotification());
+        // Send welcome notification via email (with error handling)
+        try {
+            $user->notify(new WelcomeNotification());
+        } catch (\Exception $e) {
+            \Log::error('Failed to send welcome email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail registration if email fails
+        }
 
-        // Send welcome message via WhatsApp
-        $whatsappService = new WhatsAppService();
-        $hasActiveSubscription = $user->subscription_status === 'active' && 
-                               $user->subscription_ends_at && 
-                               $user->subscription_ends_at->isFuture();
-        $whatsappService->sendWelcomeMessage($user, $hasActiveSubscription);
+        // Send welcome message via WhatsApp (with error handling)
+        try {
+            $whatsappService = new WhatsAppService();
+            $hasActiveSubscription = $user->subscription_status === 'active' && 
+                                   $user->subscription_ends_at && 
+                                   $user->subscription_ends_at->isFuture();
+            $whatsappService->sendWelcomeMessage($user, $hasActiveSubscription);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send welcome WhatsApp message', [
+                'user_id' => $user->id,
+                'whatsapp_number' => $user->whatsapp_number,
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail registration if WhatsApp fails
+        }
 
         return redirect()->route('dashboard')->with('success', 'Account aangemaakt!');
     }

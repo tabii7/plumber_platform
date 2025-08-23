@@ -9,7 +9,7 @@ class PlumberCoverage extends Model
 {
     use HasFactory;
 
-      protected $fillable = ['plumber_id', 'hoofdgemeente'];
+      protected $fillable = ['plumber_id', 'hoofdgemeente', 'city', 'coverage_type'];
 
     public function plumber()
     {

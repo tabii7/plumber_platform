@@ -1,44 +1,201 @@
-@extends('layouts.app')
+@extends('layouts.modern-dashboard')
 
-@section('title','WhatsApp Connection')
+@section('title', 'WhatsApp Management')
 
-@section('header')
-    <h1 class="text-2xl font-bold text-gray-900">WhatsApp Connection</h1>
+@section('page-title', 'WhatsApp Management')
+
+@section('sidebar-nav')
+    <div class="nav-item">
+        <a href="{{ route('admin.dashboard') }}" class="nav-link">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.whatsapp') }}" class="nav-link active">
+            <i class="fab fa-whatsapp"></i>
+            <span>WhatsApp</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.flows.index') }}" class="nav-link">
+            <i class="fas fa-project-diagram"></i>
+            <span>WhatsApp Flows</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('plumbers.index') }}" class="nav-link">
+            <i class="fas fa-user-tie"></i>
+            <span>Plumbers</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('clients.index') }}" class="nav-link">
+            <i class="fas fa-users"></i>
+            <span>Clients</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('admin.requests.index') }}" class="nav-link">
+            <i class="fas fa-tools"></i>
+            <span>Service Requests</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('support') }}" class="nav-link">
+            <i class="fas fa-headset"></i>
+            <span>Support</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('profile.edit') }}" class="nav-link">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </div>
 @endsection
 
 @section('content')
 @if(session('success'))
-    <div class="mb-4 rounded bg-green-50 p-3 text-green-800 ring-1 ring-green-600/20">{{ session('success') }}</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 @endif
+
 @if(session('error'))
-    <div class="mb-4 rounded bg-red-50 p-3 text-red-800 ring-1 ring-red-600/20">{{ session('error') }}</div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 @endif
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="rounded-lg bg-white ring-1 ring-gray-200 p-5">
-        <h3 class="font-semibold text-gray-900">Status</h3>
-        <div class="mt-2 text-sm text-gray-700">
-            <pre class="bg-gray-50 p-3 rounded">{{ json_encode($status, JSON_PRETTY_PRINT) }}</pre>
-        </div>
+<div class="row">
+    <!-- Left: Status/QR or Connected -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fab fa-whatsapp me-2"></i>
+                    Connection Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="text-muted">Status:</span>
+                    <span class="badge bg-info ms-2">
+                        {{ json_encode($status, JSON_PRETTY_PRINT) }}
+                    </span>
+                </div>
 
-        <div class="mt-4">
-            @if ($qr)
-                <p class="text-gray-700 mb-2">📲 Scan this QR with WhatsApp to connect:</p>
-                <img src="{{ $qr }}" alt="QR" class="mx-auto border rounded shadow">
-            @else
-                <p class="text-green-700 font-medium">✅ Already connected (or QR not available yet).</p>
-            @endif
+                @if ($qr)
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Scan this QR code:</strong><br>
+                        WhatsApp → Linked devices → Link a device
+                    </div>
+                    <div class="text-center p-3 border border-dashed rounded">
+                        <img src="{{ $qr }}" alt="WhatsApp QR Code" class="img-fluid" style="max-height: 280px;">
+                    </div>
+                @else
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Already connected (or QR not available yet).</strong>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 
-    <div class="rounded-lg bg-white ring-1 ring-gray-200 p-5">
-        <h3 class="font-semibold text-gray-900">Send Test Message</h3>
-        <form method="POST" action="{{ route('admin.whatsapp.testSend') }}" class="mt-3 space-y-3">
-            @csrf
-            <input name="number" class="w-full border rounded p-2" placeholder="e.g. 32470123456" required>
-            <textarea name="message" class="w-full border rounded p-2" rows="4" placeholder="Type a message..." required></textarea>
-            <button class="inline-flex items-center rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">Send</button>
-        </form>
+    <!-- Right: Test form -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Send Test Message
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('admin.whatsapp.testSend') }}">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="number" class="form-label">WhatsApp Number</label>
+                        <input type="text" id="number" name="number" 
+                               class="form-control" 
+                               placeholder="e.g. 32470123456" required>
+                        <div class="form-text">Enter the number without any special characters</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea id="message" name="message" 
+                                  class="form-control" 
+                                  rows="4" 
+                                  placeholder="Type your test message" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Send Test Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    WhatsApp Bot Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Connection Details</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Bot Status:</strong> 
+                                <span class="badge bg-info">
+                                    {{ $status['status'] ?? 'Unknown' }}
+                                </span>
+                            </li>
+                            <li><strong>Last Updated:</strong> {{ now()->format('M d, Y H:i:s') }}</li>
+                            <li><strong>Environment:</strong> {{ config('app.env') }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Quick Actions</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-tachometer-alt me-2"></i>
+                                Back to Dashboard
+                            </a>
+                            <a href="{{ route('admin.flows.index') }}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-project-diagram me-2"></i>
+                                Manage Flows
+                            </a>
+                            <a href="{{ route('support') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-headset me-2"></i>
+                                Get Support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
