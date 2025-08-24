@@ -481,7 +481,7 @@
                 
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="#pricing">Pricing</a>
+                        <a class="nav-link" href="#pricing">Pricingsss</a>
                     </li>
                     @guest
                         <li class="nav-item ms-2">
