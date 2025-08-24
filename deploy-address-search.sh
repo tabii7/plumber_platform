@@ -1,8 +1,18 @@
+#!/bin/bash
+
+# Deploy Address Search Functionality
+# This script helps deploy the enhanced address search to your server
+
+echo "🚀 Deploying Enhanced Address Search Functionality..."
+echo "=================================================="
+
+# 1. Update API routes
+echo "📝 Updating API routes..."
+cat > routes/api.php << 'EOF'
 <?php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\WhatsAppController;
 use App\Http\Controllers\Api\WaRuntimeController;
 use App\Http\Controllers\AddressController;
 
@@ -12,16 +22,11 @@ use App\Http\Controllers\AddressController;
 |--------------------------------------------------------------------------
 */
 
-// Default user endpoint
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// WhatsApp webhook endpoints (public, no sanctum)
-Route::post('/whatsapp/incoming', [WhatsAppController::class, 'incoming']);
-Route::post('/whatsapp/send', [WhatsAppController::class, 'send']);
-
-
+// WhatsApp runtime
 Route::post('/wa/incoming', [WaRuntimeController::class, 'incoming']);
 
 // Address search routes
@@ -256,4 +261,42 @@ Route::get('/address/search', function (Request $request) {
 
     return response()->json(['data' => [], 'source' => 'none']);
 });
+EOF
 
+echo "✅ API routes updated!"
+
+# 2. Update WhatsApp Runtime Controller
+echo "📝 Updating WhatsApp Runtime Controller..."
+# Note: This is a large file, you'll need to manually update it
+echo "⚠️  Please manually update app/Http/Controllers/Api/WaRuntimeController.php"
+echo "   - Add exit command handling (lines ~70-80)"
+echo "   - Add menu option handling (lines ~150-200)"
+echo "   - Add helper methods (lines ~1100-1200)"
+
+# 3. Update register view
+echo "📝 Updating register view..."
+# Note: This is a large file, you'll need to manually update it
+echo "⚠️  Please manually update resources/views/auth/register.blade.php"
+echo "   - Replace the address search JavaScript section"
+
+# 4. Add test route
+echo "📝 Adding test route..."
+echo "Route::get('/test-address', function () { return view('test-address'); });" >> routes/web.php
+
+# 5. Clear caches
+echo "🧹 Clearing caches..."
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+
+echo "✅ Deployment script completed!"
+echo ""
+echo "📋 Manual steps required:"
+echo "1. Update app/Http/Controllers/Api/WaRuntimeController.php"
+echo "2. Update resources/views/auth/register.blade.php"
+echo "3. Test the functionality at /test-address"
+echo ""
+echo "🎯 Test URLs:"
+echo "- Register: /register"
+echo "- Address Test: /test-address"

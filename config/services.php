@@ -34,6 +34,7 @@ return [
     'whatsapp' => [
         'api_url' => env('WHATSAPP_API_URL', 'https://api.whatsapp.com'),
         'api_key' => env('WHATSAPP_API_KEY'),
+        'bot_url' => env('WHATSAPP_BOT_URL', 'http://127.0.0.1:3000'),
     ],
 
 ];

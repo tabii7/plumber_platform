@@ -177,4 +177,13 @@ Route::get('/support', function () {
     return view('support');
 })->middleware(['auth'])->name('support');
 
+// Test pages
+Route::get('/test-register', function () {
+    return view('test-register');
+});
+
+Route::get('/test-address', function () {
+    return view('test-address');
+});
+
 

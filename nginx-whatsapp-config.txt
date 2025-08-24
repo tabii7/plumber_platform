@@ -1,0 +1,36 @@
+# Nginx configuration for WhatsApp bot proxy
+# Save this as /etc/nginx/sites-available/whatsapp-bot
+
+server {
+    listen 80;
+    server_name plumber.easyred.com;
+
+    # Main Laravel app
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # WhatsApp bot proxy
+    location /whatsapp-bot/ {
+        proxy_pass http://127.0.0.1:3000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+# Commands to run:
+# sudo cp nginx-whatsapp-config.txt /etc/nginx/sites-available/whatsapp-bot
+# sudo ln -s /etc/nginx/sites-available/whatsapp-bot /etc/nginx/sites-enabled/
+# sudo nginx -t
+# sudo systemctl reload nginx
+

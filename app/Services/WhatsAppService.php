@@ -24,7 +24,7 @@ class WhatsAppService
     {
         try {
             // Send message through our WhatsApp bot API
-            $response = Http::post('http://127.0.0.1:3000/send-message', [
+            $response = Http::post(config('services.whatsapp.bot_url') . '/send-message', [
                 'number' => $phoneNumber,
                 'message' => $message
             ]);
