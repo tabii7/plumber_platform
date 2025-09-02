@@ -20,11 +20,13 @@
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('welcome') }}#pricing" class="nav-link">
-            <i class="fas fa-credit-card"></i>
-            <span>Subscribe</span>
+        <a href="{{ route('plumber.schedule.index') }}" class="nav-link">
+            <i class="fas fa-clock"></i>
+            <span>Schedule</span>
         </a>
     </div>
+    
+
     
     <div class="nav-item">
         <a href="{{ route('support') }}" class="nav-link">
@@ -122,60 +124,7 @@
         </div>
     </div>
 
-    <!-- Subscription Status -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-credit-card me-2"></i>
-                        Subscription Status
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if(Auth::user()->subscription_status === 'active' && Auth::user()->subscription_ends_at && Auth::user()->subscription_ends_at->isFuture())
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h6 class="text-success mb-1">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    Active Subscription
-                                </h6>
-                                <p class="text-muted mb-0">
-                                    Plan: <strong>{{ Auth::user()->subscription_plan ?? 'Premium' }}</strong>
-                                </p>
-                                @if(Auth::user()->subscription_ends_at)
-                                    <p class="text-muted mb-0">
-                                        Expires: <strong>{{ Auth::user()->subscription_ends_at->format('M d, Y') }}</strong>
-                                    </p>
-                                @endif
-                            </div>
-                            <div class="col-md-4 text-md-end">
-                                <span class="badge bg-success fs-6">Active</span>
-                            </div>
-                        </div>
-                    @else
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h6 class="text-warning mb-1">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    No Active Subscription
-                                </h6>
-                                <p class="text-muted mb-0">
-                                    Subscribe to a plan to receive job requests and access the platform.
-                                </p>
-                            </div>
-                            <div class="col-md-4 text-md-end">
-                                <a href="{{ route('welcome') }}#pricing" class="btn btn-primary">
-                                    <i class="fas fa-credit-card me-2"></i>
-                                    Subscribe Now
-                                </a>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Coverage Areas -->
     <div class="row mb-4">
@@ -251,10 +200,7 @@
                             <i class="fas fa-map-marker-alt me-2"></i>
                             Manage Coverage Areas
                         </a>
-                        <a href="{{ route('welcome') }}#pricing" class="btn btn-outline-success">
-                            <i class="fas fa-credit-card me-2"></i>
-                            Manage Subscription
-                        </a>
+
                         <a href="{{ route('support') }}" class="btn btn-outline-info">
                             <i class="fas fa-headset me-2"></i>
                             Contact Support

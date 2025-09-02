@@ -68,7 +68,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-1">Plumbers</h4>
-                    <p class="text-muted mb-0">Manage all plumbers, their service areas, categories, and availability.</p>
+                    <p class="text-muted mb-0">Manage plumbers and basic account/contact details.</p>
                 </div>
                 <div class="d-flex gap-2">
                     <span class="badge bg-primary fs-6">{{ $plumbers->total() ?? 0 }} Total Plumbers</span>
@@ -102,110 +102,101 @@
                     <thead class="table-light">
                         <tr>
                             <th>Name</th>
-                            <th>Contact</th>
-                            <th>Service Areas</th>
-                            <th>Tariff</th>
-                            <th>Categories</th>
-                            <th>Status</th>
+                            <th>Company</th>
+                            <th>WhatsApp</th>
+                            <th>Location</th>
+                            <th>Work Radius</th>
+                            <th>Subscription</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($plumbers as $plumber)
                             @php
-                                // User
-                                $u = $plumber->user ?? null;
+                                // Resolve user record (your fields live here)
+                                $u = $plumber->user ?? $plumber;
+
+                                // Basic fields
                                 $name = $u->full_name ?? $u->name ?? '—';
-                                $phone = $u->phone ?? '—';
+                                $company = $u->company_name ?? '—';
                                 $wa = $u->whatsapp_number ?? '—';
+                                $radius = $u->werk_radius ?? $plumber->werk_radius ?? null;
 
-                                // Postal areas (string, array or relation)
-                                $areas = $plumber->postal_codes ?? $plumber->municipalities ?? null;
-                                if (is_array($areas)) {
-                                    $areasText = implode(', ', $areas);
-                                } elseif (is_string($areas)) {
-                                    $areasText = $areas;
-                                } else {
-                                    // if you have a relation like $plumber->postalCodes, show first few
-                                    $areasText = method_exists($plumber, 'postalCodes')
-                                        ? $plumber->postalCodes->pluck('Postcode')->take(3)->implode(', ') .
-                                          ($plumber->postalCodes->count() > 3 ? ' +' . ($plumber->postalCodes->count() - 3) . ' more' : '')
-                                        : '—';
+                                // Location: prefer city, postal_code, country; fall back to address_json if present
+                                $locParts = [];
+                                if (!empty($u->city)) $locParts[] = $u->city;
+                                if (!empty($u->postal_code)) $locParts[] = $u->postal_code;
+                                if (!empty($u->country)) $locParts[] = $u->country;
+
+                                if (empty($locParts) && !empty($u->address_json)) {
+                                    $addr = is_string($u->address_json) ? json_decode($u->address_json, true) : $u->address_json;
+                                    if (is_array($addr)) {
+                                        foreach (['city','postal_code','country','formatted_address'] as $k) {
+                                            if (!empty($addr[$k])) { $locParts[] = $addr[$k]; }
+                                        }
+                                    }
                                 }
+                                $locationText = !empty($locParts) ? implode(', ', $locParts) : '—';
 
-                                // Tariff
-                                $tariff = $plumber->tariff ? '€' . number_format((float)$plumber->tariff, 2) : '—';
-
-                                // Categories (JSON of names, or pivot)
-                                $catsRaw = $plumber->service_categories ?? null;
-                                if (is_string($catsRaw)) {
-                                    $decoded = json_decode($catsRaw, true);
-                                    $categories = is_array($decoded) ? implode(', ', $decoded) : $catsRaw;
-                                } elseif (is_array($catsRaw)) {
-                                    $categories = implode(', ', $catsRaw);
-                                } elseif (method_exists($plumber, 'categories')) {
-                                    $categories = $plumber->categories->pluck('name')->implode(', ');
-                                } else {
-                                    $categories = '—';
-                                }
-
-                                // Status badge
-                                $status = $plumber->availability_status ?? 'unknown';
-                                $statusLabel = $status === 'available' ? 'Available' :
-                                               (in_array($status, ['busy','holiday']) ? 'Not working' : 'Unknown');
+                                // Subscription
+                                $plan = $u->subscription_plan ?? null;
+                                $subStatus = strtolower($u->subscription_status ?? '');
+                                $statusLabel = $subStatus ? ucfirst($subStatus) : 'Unknown';
+                                $badgeClass = match ($subStatus) {
+                                    'active' => 'bg-success',
+                                    'trial', 'past_due' => 'bg-warning',
+                                    'canceled', 'cancelled', 'expired' => 'bg-danger',
+                                    default => 'bg-secondary'
+                                };
                             @endphp
 
                             <tr>
                                 <td>
                                     <div class="fw-medium">{{ $name }}</div>
                                 </td>
-                                <td>
-                                    <div class="small">
-                                        @if($phone !== '—')
-                                            <div>
-                                                <i class="fas fa-phone me-1 text-muted"></i>
-                                                <a href="tel:{{ $phone }}" class="text-decoration-none">{{ $phone }}</a>
-                                            </div>
-                                        @endif
-                                        @if($wa !== '—')
-                                            <div>
-                                                <i class="fab fa-whatsapp me-1 text-success"></i>
-                                                <a href="https://wa.me/{{ $wa }}" target="_blank" class="text-decoration-none">{{ $wa }}</a>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </td>
+
                                 <td>
                                     <div class="small text-muted" style="max-width: 200px;">
-                                        {{ $areasText }}
+                                        {{ $company }}
                                     </div>
                                 </td>
+
                                 <td>
-                                    <span class="fw-medium">{{ $tariff }}</span>
-                                </td>
-                                <td>
-                                    <div class="small text-muted" style="max-width: 150px;">
-                                        {{ $categories }}
-                                    </div>
-                                </td>
-                                <td>
-                                    @if($status === 'available')
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
-                                            {{ $statusLabel }}
-                                        </span>
-                                    @elseif(in_array($status, ['busy','holiday']))
-                                        <span class="badge bg-danger">
-                                            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
-                                            {{ $statusLabel }}
-                                        </span>
+                                    @if($wa && $wa !== '—')
+                                        <div class="small">
+                                            <i class="fab fa-whatsapp me-1 text-success"></i>
+                                            <a href="https://wa.me/{{ preg_replace('/\D+/', '', $wa) }}" target="_blank" class="text-decoration-none">
+                                                {{ $wa }}
+                                            </a>
+                                        </div>
                                     @else
-                                        <span class="badge bg-secondary">
-                                            <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
-                                            {{ $statusLabel }}
-                                        </span>
+                                        <span class="text-muted">—</span>
                                     @endif
                                 </td>
+
+                                <td>
+                                    <div class="small text-muted" style="max-width: 220px;">
+                                        {{ $locationText }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="small fw-medium">
+                                        {{ $radius ? $radius . ' km' : '—' }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="badge {{ $badgeClass }} align-self-start">
+                                            {{ $statusLabel }}
+                                        </span>
+                                        @if($plan)
+                                            <span class="small text-muted mt-1">Plan: {{ $plan }}</span>
+                                        @endif
+                                    </div>
+                                </td>
+
                                 <td class="text-end">
                                     <div class="btn-group" role="group">
                                         <a href="{{ route('plumbers.show', $plumber) }}" 

@@ -11,7 +11,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const LARAVEL_API = process.env.LARAVEL_API_URL || 'https://your-domain.com';
+// const LARAVEL_API = process.env.LARAVEL_API_URL || 'https://your-domain.com';
+LARAVEL_API = 'http://127.0.0.1:8000'
 let sock;
 let qrCodeData = null;
 let isConnected = false;

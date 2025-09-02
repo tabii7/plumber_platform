@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use App\Models\{User, WaLog, WaSession, WaRequest, WaOffer, WaFlow, WaNode};
 
 class WaRuntimeController extends Controller
@@ -169,38 +170,32 @@ class WaRuntimeController extends Controller
                     } else {
                         return $this->setAvailability($from, $user, $session, true);
                     }
-                    break;
                 case '2':
                     if ($user->role === 'client') {
                         return $this->showOffersList($from, $user, $session);
                     } else {
                         return $this->setAvailability($from, $user, $session, false);
                     }
-                    break;
                 case '3':
                     if ($user->role === 'client') {
                         return $this->handleRatingRequest($from, $user, $session);
                     } else {
                         return $this->markJobCompleted($from, $user, $session);
                     }
-                    break;
                 case '4':
                     if ($user->role === 'client') {
                         return $this->showRequestStatus($from, $user, $session);
                     } else {
                         return $this->showPlumberCurrentRequest($from, $user, $session);
                     }
-                    break;
                 case '5':
                     return $this->showSupportMessage($from, $user, $session);
-                    break;
                 case '6':
                     // Exit menu
                     if ($session) {
                         $session->delete();
                     }
                     return $this->replyText($from, "Menu closed. Type 'help' to open the menu again or 'start' to begin a new request.");
-                    break;
                 default:
                     return $this->showMenu($from, $user, $session);
             }
@@ -385,11 +380,11 @@ class WaRuntimeController extends Controller
                     }
                     
                     // Handle common variations for problem types
-                    if (($optionText === '1) leak' && in_array($userText, ['leak', 'leakage', 'water leak', 'dripping'])) ||
-                        ($optionText === '2) blockage / drain' && in_array($userText, ['blockage', 'drain', 'clogged', 'clog', 'blocked'])) ||
-                        ($optionText === '3) heating / boiler' && in_array($userText, ['heating', 'boiler', 'hot water', 'heater'])) ||
-                        ($optionText === '4) installation / replacement' && in_array($userText, ['installation', 'replace', 'new', 'install'])) ||
-                        ($optionText === '5) other' && in_array($userText, ['other', 'something else', 'different']))) {
+                    if (($optionText === 'leak' && in_array($userText, ['leak', 'leakage', 'water leak', 'dripping'])) ||
+                        ($optionText === 'blockage / drain' && in_array($userText, ['blockage', 'drain', 'clogged', 'clog', 'blocked'])) ||
+                        ($optionText === 'heating / boiler' && in_array($userText, ['heating', 'boiler', 'hot water', 'heater'])) ||
+                        ($optionText === 'installation / replacement' && in_array($userText, ['installation', 'replace', 'new', 'install'])) ||
+                        ($optionText === 'other' && in_array($userText, ['other', 'something else', 'different']))) {
                         $matchedOption = $option;
                         break;
                     }
@@ -477,6 +472,76 @@ class WaRuntimeController extends Controller
                 return $this->replyText($from, $body);
         }
     }
+
+    // ---------- NEW: proactive send helpers ----------
+    private function formatButtonsAsText(array $payload): string
+    {
+        $lines = [];
+        $lines[] = $payload['body'] ?? '';
+        $options = $payload['options'] ?? [];
+        if (!empty($options)) {
+            $lines[] = '';
+            foreach ($options as $i => $opt) {
+                $n = $i + 1;
+                $label = $opt['text'] ?? ("Option {$n}");
+                // Strip any existing numbers from the beginning of the label to prevent double numbering
+                $cleanLabel = preg_replace('/^\d+\)?\s*/', '', $label);
+                $lines[] = "{$n}) {$cleanLabel}";
+            }
+        }
+        return implode("\n", $lines);
+    }
+
+    private function sendNodeOutgoing(string $to, WaNode $node, array $ctx): void
+    {
+        $body = $this->replaceVariables($node->body, $ctx);
+
+        if ($node->type === 'buttons') {
+            $text = $this->formatButtonsAsText([
+                'body' => $body,
+                'options' => $node->options_json ?? []
+            ]);
+            $this->waSend($to, $text);
+        } elseif ($node->type === 'list') {
+            // flatten list to text
+            $lines = [$body];
+            $sections = $node->options_json ?? [];
+            if (!empty($sections)) {
+                $lines[] = '';
+                foreach ($sections as $section) {
+                    if (!empty($section['title'])) {
+                        $lines[] = $section['title'] . ':';
+                    }
+                    if (!empty($section['rows'])) {
+                        foreach ($section['rows'] as $i => $row) {
+                            $n = $i + 1;
+                            $title = $row['title'] ?? ("Option {$n}");
+                            // Strip any existing numbers from the beginning of the title to prevent double numbering
+                            $cleanTitle = preg_replace('/^\d+\)?\s*/', '', $title);
+                            $lines[] = "{$n}) {$cleanTitle}";
+                        }
+                    }
+                }
+            }
+            $this->waSend($to, implode("\n", $lines));
+        } else {
+            $this->waSend($to, $body);
+        }
+    }
+
+    private function waSend(string $number, string $message): void
+    {
+        try {
+            $botBase = rtrim(config('services.wa_bot.url', 'http://127.0.0.1:3000'), '/');
+            Http::post($botBase . '/send-message', [
+                'number'  => $number,
+                'message' => $message,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('WA proactive send failed', ['to' => $number, 'error' => $e->getMessage()]);
+        }
+    }
+    // ---------- end proactive helpers ----------
 
     private function replaceVariables($text, $ctx)
     {
@@ -583,41 +648,31 @@ class WaRuntimeController extends Controller
         }
         
         if ($user->role === 'client') {
-            return $this->sendList($from, [
-                'title' => 'Main menu',
-                'body' => 'Choose an option:',
-                'options' => [
-                    [
-                        'title' => 'Customer Options',
-                        'rows' => [
-                            ['id' => 'start', 'title' => '1. Start new request'],
-                            ['id' => 'offers', 'title' => '2. View offers'],
-                            ['id' => 'rate', 'title' => '3. Rate completed job'],
-                            ['id' => 'status', 'title' => '4. View status of current request'],
-                            ['id' => 'support', 'title' => '5. Contact support'],
-                            ['id' => 'exit', 'title' => '6. Exit this menu']
-                        ]
-                    ]
-                ]
-            ]);
+            // Send client menu as plain text to avoid double numbering issues
+            $message = "📋 *Client Menu*\n\n";
+            $message .= "Choose an option:\n\n";
+            $message .= "1) Start new request\n";
+            $message .= "2) View offers\n";
+            $message .= "3) Rate completed job\n";
+            $message .= "4) View status of current request\n";
+            $message .= "5) Contact support\n";
+            $message .= "6) Exit this menu\n\n";
+            $message .= "Reply with the number (1-6) to select an option.";
+            
+            return $this->replyText($from, $message);
         } else {
-            return $this->sendList($from, [
-                'title' => 'Plumber menu',
-                'body' => 'Choose an option:',
-                'options' => [
-                    [
-                        'title' => 'Plumber Options',
-                        'rows' => [
-                            ['id' => 'available_on', 'title' => '1. Set availability ON'],
-                            ['id' => 'available_off', 'title' => '2. Set availability OFF'],
-                            ['id' => 'complete', 'title' => '3. Mark job as completed'],
-                            ['id' => 'current_request', 'title' => '4. Current request'],
-                            ['id' => 'support', 'title' => '5. Contact support'],
-                            ['id' => 'exit', 'title' => '6. Exit this menu']
-                        ]
-                    ]
-                ]
-            ]);
+            // Send plumber menu as plain text to avoid double numbering issues
+            $message = "🔧 *Plumber Menu*\n\n";
+            $message .= "Choose an option:\n\n";
+            $message .= "1) Set availability ON\n";
+            $message .= "2) Set availability OFF\n";
+            $message .= "3) Mark job as completed\n";
+            $message .= "4) Current request\n";
+            $message .= "5) Contact support\n";
+            $message .= "6) Exit this menu\n\n";
+            $message .= "Reply with the number (1-6) to select an option.";
+            
+            return $this->replyText($from, $message);
         }
     }
 
@@ -668,7 +723,7 @@ class WaRuntimeController extends Controller
             })
             ->get();
 
-        // Broadcast to each plumber
+        // Broadcast to each plumber (now proactive)
         foreach ($plumbers as $plumber) {
             $this->sendJobBroadcast($plumber, $user, $ctx, $request);
         }
@@ -720,10 +775,13 @@ class WaRuntimeController extends Controller
             'last_message_at' => now(),
         ]);
 
-        // Use the dynamic flow system instead of hardcoded message
-        $this->sendNodeResponse($plumber->whatsapp_number, $this->getNode('plumber_flow', 'P0'), $plumberSession->context_json);
-        
-        \Log::info("Job broadcast sent to plumber via dynamic flow", [
+        // PROACTIVE push of P0 to the plumber (instead of only queueing a reply)
+        $p0 = $this->getNode('plumber_flow', 'P0');
+        if ($p0) {
+            $this->sendNodeOutgoing($plumber->whatsapp_number, $p0, $plumberSession->context_json);
+        }
+
+        \Log::info("Job broadcast sent to plumber proactively", [
             'plumber_id' => $plumber->id,
             'request_id' => $request->id,
             'context' => $plumberSession->context_json
@@ -771,26 +829,7 @@ class WaRuntimeController extends Controller
                 $message .= "ETA: 20 min 🚗\n\n";
                 $message .= "Type 'offers' to view all offers or wait for more.";
 
-                try {
-                    $response = \Http::post('http://127.0.0.1:3000/send-message', [
-                        'number' => $customer->whatsapp_number,
-                        'message' => $message
-                    ]);
-                    
-                    if ($response->successful()) {
-                        \Log::info("Offer notification sent to customer", [
-                            'customer_id' => $customer->id,
-                            'offer_id' => $offer->id,
-                            'plumber_id' => $plumber->id
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    \Log::error("Failed to notify customer about offer", [
-                        'customer_id' => $customer->id,
-                        'offer_id' => $offer->id,
-                        'error' => $e->getMessage()
-                    ]);
-                }
+                $this->waSend($customer->whatsapp_number, $message);
             }
         }
     }
@@ -812,7 +851,7 @@ class WaRuntimeController extends Controller
         foreach ($offers as $index => $offer) {
             $plumber = $offer->plumber;
             $message .= ($index + 1) . ") {$plumber->full_name} • ⭐ 4.5 • 20 min 🚗\n";
-            $options[] = ['id' => ($index + 1), 'text' => ($index + 1) . ') ' . $plumber->full_name];
+            $options[] = ['id' => ($index + 1), 'text' => $plumber->full_name];
         }
 
         $message .= "\nType the number to see details, or wait for more options.";
@@ -883,8 +922,9 @@ class WaRuntimeController extends Controller
             WaSession::where('wa_number', $offerRecord->plumber->whatsapp_number)->delete();
         }
 
-        // Notify selected plumber
-        $this->replyText($offer->plumber->whatsapp_number, 
+        // Notify selected plumber (proactive with full address)
+        $this->waSend(
+            $offer->plumber->whatsapp_number,
             "✅ You were selected by " . explode(' ', $customer->full_name)[0] . ".\n" .
             "Address: {$customer->address}, {$customer->postal_code} {$customer->city}\n" .
             "Problem: " . $this->getProblemLabel($offer->request->problem) . "\n" .
@@ -900,7 +940,8 @@ class WaRuntimeController extends Controller
             ->get();
 
         foreach ($otherOffers as $otherOffer) {
-            $this->replyText($otherOffer->plumber->whatsapp_number,
+            $this->waSend(
+                $otherOffer->plumber->whatsapp_number,
                 "❌ Another plumber was selected for this job. Thanks for responding — better luck next time!"
             );
         }
@@ -1106,7 +1147,7 @@ class WaRuntimeController extends Controller
             $message .= "• Description: \"{$activeRequest->description}\"\n\n";
             $message .= "You can rate your experience by typing 'rate' or 'start' to create a new request.";
 
-            $this->replyText($customer->whatsapp_number, $message);
+            $this->waSend($customer->whatsapp_number, $message);
         }
 
         return $this->replyText($from, "✅ Job marked as completed successfully!\n\nThe customer has been notified and can now rate your work.\n\nType 'help' for available commands.");

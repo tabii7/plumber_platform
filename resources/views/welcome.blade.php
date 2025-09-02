@@ -330,6 +330,29 @@
             opacity: 0.8;
         }
         
+        .footer-links {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .footer-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-link:hover {
+            color: #10b981;
+        }
+        
+        .footer-separator {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+        }
+        
         .hero-stats {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
@@ -357,85 +380,87 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        
         /* Pricing — theme matched to hero (slate bg + green accents) */
-.pricing-section {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
-  padding: 80px 0;
-}
-.pricing-section .section-title h2 { color:#fff; }
-.pricing-section .section-title p { color: rgba(255,255,255,.85); }
+        .pricing-section {
+          background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+          padding: 80px 0;
+        }
+        .pricing-section .section-title h2 { color:#fff; }
+        .pricing-section .section-title p { color: rgba(255,255,255,.85); }
 
-.pricing-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 32px 24px;
-  text-align: center;
-  height: 100%;
-  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-.pricing-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 50px rgba(2,6,23,.14);
-  border-color: rgba(16,185,129,.35);
-}
+        .pricing-card {
+          background: #fff;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 32px 24px;
+          text-align: center;
+          height: 100%;
+          transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .pricing-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 20px 50px rgba(2,6,23,.14);
+          border-color: rgba(16,185,129,.35);
+        }
 
-.pricing-card .pricing-icon {
-  width: 64px; height: 64px; border-radius: 12px;
-  margin: 0 auto 1rem;
-  display:flex; align-items:center; justify-content:center;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color:#fff; font-size:1.7rem;
-}
+        .pricing-card .pricing-icon {
+          width: 64px; height: 64px; border-radius: 12px;
+          margin: 0 auto 1rem;
+          display:flex; align-items:center; justify-content:center;
+          background: linear-gradient(135deg, #10b981, #059669);
+          color:#fff; font-size:1.7rem;
+        }
 
-.pricing-card h3 { color:#1f2937; font-weight:700; margin-bottom: 12px; }
+        .pricing-card h3 { color:#1f2937; font-weight:700; margin-bottom: 12px; }
 
-.pricing-price .current-price { color:#10b981; font-size:2.2rem; font-weight:800; line-height:1; }
-.pricing-price .period { color:#6b7280; }
-.pricing-price .original-price { color:#9ca3af; text-decoration:line-through; }
+        .pricing-price .current-price { color:#10b981; font-size:2.2rem; font-weight:800; line-height:1; }
+        .pricing-price .period { color:#6b7280; }
+        .pricing-price .original-price { color:#9ca3af; text-decoration:line-through; }
 
-.discount-badge {
-  display:inline-block; margin-top:10px; font-weight:700; font-size:.9rem;
-  color:#065f46; background:rgba(16,185,129,.12);
-  border:1px solid rgba(16,185,129,.35); border-radius:20px;
-  padding:6px 12px;
-}
+        .discount-badge {
+          display:inline-block; margin-top:10px; font-weight:700; font-size:.9rem;
+          color:#065f46; background:rgba(16,185,129,.12);
+          border:1px solid rgba(16,185,129,.35); border-radius:20px;
+          padding:6px 12px;
+        }
 
-.pricing-features li { color:#374151; }
-.pricing-features i { color:#10b981; }
+        .pricing-features li { color:#374151; }
+        .pricing-features i { color:#10b981; }
 
-.pricing-card .btn {
-  border-radius: 10px;
-  padding: 12px 16px;
-}
-.pricing-card .btn.btn-primary {
-  /* Uses your existing .btn-primary gradient (green) */
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 8px 24px rgba(16,185,129,.28);
-  border: none;
-}
-.pricing-card .btn.btn-primary:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-}
+        .pricing-card .btn {
+          border-radius: 10px;
+          padding: 12px 16px;
+        }
+        .pricing-card .btn.btn-primary {
+          /* Uses your existing .btn-primary gradient (green) */
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          box-shadow: 0 8px 24px rgba(16,185,129,.28);
+          border: none;
+        }
+        .pricing-card .btn.btn-primary:hover {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
 
-.pricing-card.featured {
-  border: 2px solid #10b981;
-  box-shadow: 0 24px 60px rgba(16,185,129,.18);
-  position: relative;
-}
-.featured-badge {
-  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
-  background:#10b981; color:#0b1f17; /* dark teal text for contrast */
-  padding:8px 14px; border-radius:999px; font-weight:800; font-size:.82rem;
-  border: 1px solid rgba(2,6,23,.08);
-}
-.yearly-price {
-  background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px;
-  padding:10px; margin-top:10px;
-}
-.yearly-price div:first-child { font-weight:700; color:#1f2937; }
-.yearly-price div:last-child { color:#059669; font-size:.92rem; }
+        .pricing-card.featured {
+          border: 2px solid #10b981;
+          box-shadow: 0 24px 60px rgba(16,185,129,.18);
+          position: relative;
+        }
+        .featured-badge {
+          position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+          background:#10b981; color:#0b1f17; /* dark teal text for contrast */
+          padding:8px 14px; border-radius:999px; font-weight:800; font-size:.82rem;
+          border: 1px solid rgba(2,6,23,.08);
+        }
+        .yearly-price {
+          background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px;
+          padding:10px; margin-top:10px;
+        }
+        .yearly-price div:first-child { font-weight:700; color:#1f2937; }
+        .yearly-price div:last-child { color:#059669; font-size:.92rem; }
+
 
         @media (max-width: 768px) {
             .hero-title {
@@ -481,11 +506,13 @@
                 
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="#pricing">Pricingsss</a>
+                        <a class="nav-link" href="#pricing">Pricing</a>
                     </li>
+
+
                     @guest
                         <li class="nav-item ms-2">
-                            <a href="{{ url('/register') }}" class="btn btn-primary">Get Started</a>
+                            <a href="{{ url('/login') }}" class="btn btn-primary">Get Started</a>
                         </li>
                     @else
                         <li class="nav-item dropdown">
@@ -525,8 +552,9 @@
                             <a href="#pricing" class="btn btn-primary btn-lg">
                                 <i class="fas fa-crown me-2"></i>View Pricing Plans
                             </a>
+                            
                             @guest
-                                <a href="{{ url('/register') }}" class="btn btn-outline btn-lg">
+                                <a href="{{ url('/login') }}" class="btn btn-outline btn-lg">
                                     <i class="fas fa-user-plus me-2"></i>Get Started
                                 </a>
                             @else
@@ -625,7 +653,7 @@
                             </div>
                         </div>
                         
-                        <a href="{{ url('/register') }}" class="btn btn-primary mt-3">
+                        <a href="{{ route('register') }}" class="btn btn-primary mt-3">
                             Join Our Platform
                         </a>
                     </div>
@@ -655,7 +683,7 @@
                         </div>
                         <h3>Emergency Plumbing</h3>
                         <p>24/7 emergency services for burst pipes, clogged drains, water heater failures, and other urgent plumbing issues.</p>
-                        <a href="{{ url('/register') }}" class="btn btn-outline">Get Started</a>
+                        <a href="{{ url('/login') }}" class="btn btn-outline">Get Started</a>
                     </div>
                 </div>
                 
@@ -666,7 +694,7 @@
                         </div>
                         <h3>Pipe Repair & Installation</h3>
                         <p>Professional pipe repair, replacement, and installation services for all types of plumbing systems.</p>
-                        <a href="{{ url('/register') }}" class="btn btn-outline">Get Started</a>
+                        <a href="{{ url('/login') }}" class="btn btn-outline">Get Started</a>
                     </div>
                 </div>
                 
@@ -677,7 +705,7 @@
                         </div>
                         <h3>Drain Cleaning</h3>
                         <p>Advanced drain cleaning and unclogging services using professional equipment and techniques.</p>
-                        <a href="{{ url('/register') }}" class="btn btn-outline">Get Started</a>
+                        <a href="{{ url('/login') }}" class="btn btn-outline">Get Started</a>
                     </div>
                 </div>
                 
@@ -688,7 +716,7 @@
                         </div>
                         <h3>Water Heater Services</h3>
                         <p>Installation, repair, and maintenance of water heaters including tankless and traditional systems.</p>
-                        <a href="{{ url('/register') }}" class="btn btn-outline">Get Started</a>
+                        <a href="{{ url('/login') }}" class="btn btn-outline">Get Started</a>
                     </div>
                 </div>
                 
@@ -699,7 +727,7 @@
                         </div>
                         <h3>Fixture Installation</h3>
                         <p>Professional installation of sinks, toilets, faucets, showers, and other plumbing fixtures.</p>
-                        <a href="{{ url('/register') }}" class="btn btn-outline">Get Started</a>
+                        <a href="{{ url('/login') }}" class="btn btn-outline">Get Started</a>
                     </div>
                 </div>
                 
@@ -710,7 +738,7 @@
                         </div>
                         <h3>Leak Detection</h3>
                         <p>Advanced leak detection services using modern technology to find and repair hidden water leaks.</p>
-                        <a href="{{ url('/register') }}" class="btn btn-outline">Get Started</a>
+                        <a href="{{ url('/login') }}" class="btn btn-outline">Get Started</a>
                     </div>
                 </div>
             </div>
@@ -727,7 +755,7 @@
 
     <div class="row justify-content-center g-4">
       <!-- One Time Request -->
-      <div class="col-lg-3 col-md-6">
+      <div class="col-lg-4 col-md-6">
         <div class="pricing-card">
           <div class="pricing-icon"><i class="fas fa-bolt"></i></div>
           <h3>One Time Request</h3>
@@ -754,7 +782,7 @@
       </div>
 
       <!-- Client Plan -->
-      <div class="col-lg-3 col-md-6">
+      <div class="col-lg-4 col-md-6">
         <div class="pricing-card">
           <div class="pricing-icon"><i class="fas fa-home"></i></div>
           <h3>Client Plan</h3>
@@ -790,7 +818,7 @@
       </div>
 
       <!-- Company Plan (Featured) -->
-      <div class="col-lg-3 col-md-6">
+      <div class="col-lg-4 col-md-6">
         <div class="pricing-card featured">
           <div class="featured-badge">MOST POPULAR</div>
           <div class="pricing-icon"><i class="fas fa-building"></i></div>
@@ -827,39 +855,9 @@
           </div>
         </div>
       </div>
-
-      <!-- Plumber Plan -->
-      <div class="col-lg-3 col-md-6">
-        <div class="pricing-card">
-          <div class="pricing-icon"><i class="fas fa-tools"></i></div>
-          <h3>Plumber Plan</h3>
-
-          <div class="pricing-price mb-3">
-            <div class="current-price">FREE</div>
-            <div class="period">forever</div>
-          </div>
-
-          <div class="pricing-features mb-4" style="text-align:left">
-            <ul class="list-unstyled mb-0">
-              <li class="mb-2"><i class="fas fa-check me-2"></i>Create free profile</li>
-              <li class="mb-2"><i class="fas fa-check me-2"></i>Set service radius</li>
-              <li class="mb-2"><i class="fas fa-check me-2"></i>Receive unlimited requests</li>
-              <li class="mb-2"><i class="fas fa-check me-2"></i>Direct WhatsApp contact</li>
-              <li class="mb-2"><i class="fas fa-check me-2"></i>Earn money from jobs</li>
-            </ul>
-          </div>
-
-          <a href="{{ route('register', ['role' => 'plumber']) }}"
-             class="btn btn-primary btn-lg w-100">
-            Join Free
-          </a>
-        </div>
-      </div>
     </div>
   </div>
 </section>
-
-
 
     <!-- Contact Section -->
     <section class="section contact-section">
@@ -904,21 +902,35 @@
                 </div>
             </div>
             
-            <div class="text-center mt-5">
-                <a href="{{ url('/register') }}" class="btn btn-primary btn-lg me-3">
-                    <i class="fas fa-user-plus me-2"></i>Register Now
-                </a>
-                <a href="{{ url('/login') }}" class="btn btn-outline btn-lg" style="border-color: white; color: white;">
-                    <i class="fas fa-sign-in-alt me-2"></i>Login
-                </a>
-            </div>
+                          <div class="text-center mt-5">
+                  <a href="/client/register" class="btn btn-primary btn-lg me-3">
+                      <i class="fas fa-user me-2"></i>Register as Client
+                  </a>
+                  <a href="/plumber/register" class="btn btn-success btn-lg me-3">
+                      <i class="fas fa-tools me-2"></i>Register as Plumber
+                  </a>
+                  <a href="{{ url('/login') }}" class="btn btn-outline btn-lg" style="border-color: white; color: white;">
+                      <i class="fas fa-sign-in-alt me-2"></i>Login
+                  </a>
+              </div>
         </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 Professional Plumbing Services. All rights reserved.</p>
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p>&copy; © 2025 Professional Plumbing Services. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="footer-links">
+                        <a href="{{ route('privacy') }}" class="footer-link">Privacy & Policy</a>
+                        <span class="footer-separator">|</span>
+                        <a href="{{ route('terms') }}" class="footer-link">Terms & Conditions</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
 

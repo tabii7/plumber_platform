@@ -31,6 +31,14 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+Route::get('/terms', function () {
+    return view('terms');
+})->name('terms');
+
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('privacy');
+
 // Postal Code search + radius
 Route::get('/zoek-postcode', [PostcodeController::class, 'zoek'])->name('postcode.search');
 Route::get('/werk-radius', [PostcodeController::class, 'radius'])->name('postcode.radius');
@@ -118,6 +126,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/plumber/categories', [PlumberCategoryController::class, 'update'])
         ->name('plumber.categories.update');
 
+    // Schedule management
+    Route::get('/plumber/schedule', [App\Http\Controllers\PlumberScheduleController::class, 'index'])
+        ->name('plumber.schedule.index');
+    Route::post('/plumber/schedule', [App\Http\Controllers\PlumberScheduleController::class, 'update'])
+        ->name('plumber.schedule.update');
+    Route::get('/plumber/schedule/api', [App\Http\Controllers\PlumberScheduleController::class, 'getSchedule'])
+        ->name('plumber.schedule.api');
+    Route::post('/plumber/schedule/availability', [App\Http\Controllers\PlumberScheduleController::class, 'checkAvailability'])
+        ->name('plumber.schedule.availability');
+
 
 });
 
@@ -162,6 +180,13 @@ require __DIR__.'/auth.php';
 // ✅ Custom registration routes overriding Breeze defaults
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+
+// Separate registration routes for clients and plumbers
+Route::get('/client/register', [App\Http\Controllers\Auth\ClientRegistrationController::class, 'create'])->name('client.register');
+Route::post('/client/register', [App\Http\Controllers\Auth\ClientRegistrationController::class, 'store'])->name('client.register.store');
+
+Route::get('/plumber/register', [App\Http\Controllers\Auth\PlumberRegistrationController::class, 'create'])->name('plumber.register');
+Route::post('/plumber/register', [App\Http\Controllers\Auth\PlumberRegistrationController::class, 'store'])->name('plumber.register.store');
 
 // Checkout routes
 Route::middleware(['auth'])->group(function () {

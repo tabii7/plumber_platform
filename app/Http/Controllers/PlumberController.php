@@ -16,7 +16,7 @@ class PlumberController extends Controller
     public function index()
     {
         // include user for name/email in the table
-        $plumbers = Plumber::with('user')->latest()->paginate(20);
+        $plumbers = User::where('role', 'plumber')->latest()->paginate(20);
         return view('admin.plumbers.index', compact('plumbers'));
     }
 

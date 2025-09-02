@@ -6,7 +6,7 @@
 
 @section('sidebar-nav')
     <div class="nav-item">
-        <a href="{{ route('dashboard') }}" class="nav-link">
+        <a href="{{ route('plumber.dashboard') }}" class="nav-link">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
@@ -20,11 +20,13 @@
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('welcome') }}#pricing" class="nav-link">
-            <i class="fas fa-credit-card"></i>
-            <span>Subscribe</span>
+        <a href="{{ route('plumber.schedule.index') }}" class="nav-link">
+            <i class="fas fa-clock"></i>
+            <span>Schedule</span>
         </a>
     </div>
+    
+
     
     <div class="nav-item">
         <a href="{{ route('support') }}" class="nav-link">

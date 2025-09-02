@@ -87,7 +87,7 @@ class WaDefaultSeeder extends Seeder
             ]
         );
 
-        // 5) Dispatch job -> backend sends to plumbers based on municipality+category selection
+        // 5) Dispatch job
         WaNode::updateOrCreate(
             ['flow_id' => $client->id, 'code' => 'dispatch'],
             [
@@ -126,44 +126,52 @@ class WaDefaultSeeder extends Seeder
             ]
         );
 
-        // Plumber flow (any message triggers this for plumbers)
+        // Plumber flow
         $plumber = WaFlow::updateOrCreate(
             ['code' => 'plumber_flow'],
             ['name' => 'Plumber Flow', 'entry_keyword' => 'any', 'target_role' => 'plumber', 'is_active' => true]
         );
 
+        // P0 (NO numeric prefixes in labels -> avoids “1) 1.”)
         WaNode::updateOrCreate(
-            ['flow_id' => $plumber->id, 'code' => 'status_prompt'],
+            ['flow_id' => $plumber->id, 'code' => 'P0'],
             [
                 'type' => 'buttons',
-                'body' => 'What is your current status?',
+                'body' => "🆕 New job near you!\n\nCustomer: {{customer_name}}\nArea: {{postal_code}} {{city}}\nProblem: {{problem}}\nUrgency: {{urgency_label}}\nDescription: {{description}}\n\nDistance: {{distance_km}} km • ETA: {{eta_min}} min\n\nDo you want to send an offer?",
                 'options_json' => [
-                    ['id' => 'available', 'text' => '1. Available'],
-                    ['id' => 'busy',      'text' => '2. Busy'],
-                    ['id' => 'holiday',   'text' => '3. On holiday'],
+                    ['id' => 'yes', 'text' => 'Yes, send offer'],
+                    ['id' => 'no',  'text' => 'No, skip'],
                 ],
                 'next_map_json' => [
-                    'available' => 'status_saved',
-                    'busy'      => 'status_saved',
-                    'holiday'   => 'status_saved',
-                    '1' => 'status_saved',
-                    '2' => 'status_saved',
-                    '3' => 'status_saved',
+                    'yes' => 'P1',
+                    '1'   => 'P1',
+                    'no'  => 'P_END',
+                    '2'   => 'P_END',
                 ],
                 'sort' => 10,
             ]
         );
 
         WaNode::updateOrCreate(
-            ['flow_id' => $plumber->id, 'code' => 'status_saved'],
+            ['flow_id' => $plumber->id, 'code' => 'P1'],
             [
-                'type' => 'text',
-                'body' => '✅ Status saved: {{status}}',
+                'type' => 'collect_text',
+                'body' => "Great! Add a short message for the client (e.g., \"I'm 20 mins away\").",
+                'next_map_json' => ['default' => 'P_END'],
                 'sort' => 20,
             ]
         );
 
-        // Unregistered user flow (for users not in database)
+        WaNode::updateOrCreate(
+            ['flow_id' => $plumber->id, 'code' => 'P_END'],
+            [
+                'type' => 'text',
+                'body' => "Thanks! Your offer has been sent. We'll let you know if the client selects you.",
+                'sort' => 30,
+            ]
+        );
+
+        // Unregistered flow
         $unregistered = WaFlow::updateOrCreate(
             ['code' => 'unregistered_flow'],
             ['name' => 'Unregistered Flow', 'entry_keyword' => 'any', 'target_role' => 'any', 'is_active' => true]

@@ -170,7 +170,9 @@ class WaFlowEngine
                 $lines[] = ''; // spacer
                 foreach ($opts as $i => $opt) {
                     $label = $opt['label'] ?? $opt['title'] ?? $opt['id'] ?? ('Option '.($i+1));
-                    $lines[] = ($i+1).". ".$label;
+                    // Strip any existing numbers from the beginning of the label to prevent double numbering
+                    $cleanLabel = preg_replace('/^\d+[\.\)]\s*/', '', $label);
+                    $lines[] = ($i+1).". ".$cleanLabel;
                 }
                 $lines[] = '';
                 $lines[] = "Reply with the number.";
