@@ -394,9 +394,9 @@ function displayNearbyTree(municipalityData) {
         
         return `
             <div class="municipality-item border rounded ${itemClass}">
-                <div class="d-flex align-items-center p-2 municipality-header" data-municipality="${item.municipality}" style="cursor: pointer;">
-                    <div class="d-flex align-items-center me-2">
-                        <i class="fas fa-chevron-right expand-icon text-muted" style="font-size: 0.8rem; transition: transform 0.2s;"></i>
+                <div class="d-flex align-items-center p-2">
+                    <div class="expand-area d-flex align-items-center me-2" data-municipality="${item.municipality}" style="cursor: pointer; padding: 4px;">
+                        <i class="fas fa-plus expand-icon text-muted" style="font-size: 0.8rem; transition: transform 0.2s;"></i>
                     </div>
                     <input type="checkbox" id="municipality-${item.municipality}" 
                            class="${checkboxClass} me-2"
@@ -404,7 +404,7 @@ function displayNearbyTree(municipalityData) {
                            data-type="municipality"
                            ${checkboxDisabled}>
                     <label for="municipality-${item.municipality}" class="flex-fill small" style="cursor: pointer;">
-                        <div class="fw-medium">➕ ${item.municipality} (${item.distance.toFixed(1)}km)${statusText}</div>
+                        <div class="fw-medium">${item.municipality} (${item.distance.toFixed(1)}km)${statusText}</div>
                         <div class="text-muted small">${sourcesText}</div>
                     </label>
                 </div>
@@ -415,29 +415,40 @@ function displayNearbyTree(municipalityData) {
         `;
     }).join('');
     
-    // Wire municipality header click events for expand/collapse
-    nearbyTree.querySelectorAll('.municipality-header').forEach(header => {
-        header.addEventListener('click', async (e) => {
-            // Don't trigger if clicking on checkbox
-            if (e.target.type === 'checkbox') return;
+    // Use event delegation for expand area clicks
+    nearbyTree.addEventListener('click', async (e) => {
+        const expandArea = e.target.closest('.expand-area');
+        if (!expandArea) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Expand area clicked'); // Debug log
+        
+        const municipality = expandArea.dataset.municipality;
+        const municipalityItem = expandArea.closest('.municipality-item');
+        const citiesContainer = municipalityItem.querySelector('.cities-container');
+        const expandIcon = expandArea.querySelector('.expand-icon');
+        
+        console.log('Municipality:', municipality); // Debug log
+        console.log('Cities container:', citiesContainer); // Debug log
+        
+        if (citiesContainer && citiesContainer.classList.contains('d-none')) {
+            // Expand
+            console.log('Expanding...'); // Debug log
+            citiesContainer.classList.remove('d-none');
+            expandIcon.className = 'fas fa-minus expand-icon text-muted';
+            expandIcon.style.transform = 'rotate(0deg)';
             
-            const municipality = header.dataset.municipality;
-            const citiesContainer = header.parentElement.querySelector('.cities-container');
-            const expandIcon = header.querySelector('.expand-icon');
-            
-            if (citiesContainer.classList.contains('d-none')) {
-                // Expand
-                citiesContainer.classList.remove('d-none');
-                expandIcon.style.transform = 'rotate(90deg)';
-                
-                // Load cities for this municipality
-                await loadCitiesForMunicipality(municipality, citiesContainer);
-            } else {
-                // Collapse
-                citiesContainer.classList.add('d-none');
-                expandIcon.style.transform = 'rotate(0deg)';
-            }
-        });
+            // Load cities for this municipality
+            await loadCitiesForMunicipality(municipality, citiesContainer);
+        } else if (citiesContainer) {
+            // Collapse
+            console.log('Collapsing...'); // Debug log
+            citiesContainer.classList.add('d-none');
+            expandIcon.className = 'fas fa-plus expand-icon text-muted';
+            expandIcon.style.transform = 'rotate(0deg)';
+        }
     });
     
     // Wire checkbox events

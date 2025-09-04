@@ -39,4 +39,26 @@ class WaRequest extends Model
     {
         return $this->hasMany(WaOffer::class, 'request_id');
     }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
+
+    /**
+     * Get available statuses
+     */
+    public static function getAvailableStatuses(): array
+    {
+        return [
+            'broadcasting' => 'Broadcasting to plumbers',
+            'active' => 'Plumber assigned',
+            'in_progress' => 'Work in progress',
+            'completed' => 'Job completed',
+            'cancelled' => 'Request cancelled'
+        ];
+    }
 }

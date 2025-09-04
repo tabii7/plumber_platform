@@ -17,23 +17,69 @@
     <style>
         body{
             font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            transition: background 0.3s ease;
+        }
+        
+        /* Light mode styles */
+        body:not(.dark) {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        
+        /* Dark mode styles */
+        body.dark {
             background:
                 radial-gradient(1200px 600px at -10% -10%, #1f2954 0%, transparent 60%),
                 radial-gradient(800px 500px at 110% 0%, #0c6775 0%, transparent 55%),
                 linear-gradient(180deg, #0a0f1e 0%, #0c1327 100%);
-            min-height: 100vh;
         }
-        .glass { background: rgba(255,255,255,.95); backdrop-filter: blur(6px); }
+        
+        .glass { 
+            background: rgba(255,255,255,.95); 
+            backdrop-filter: blur(6px); 
+            transition: background 0.3s ease;
+        }
+        
+        .dark .glass { 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(6px);
+        }
+        
         .admin-grid { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
         @media (max-width: 1024px){ .admin-grid { grid-template-columns: 1fr; } }
-        .side-link { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; font-size:14px; font-weight:600; color:#374151; text-decoration:none; }
+        
+        .side-link { 
+            display:flex; 
+            align-items:center; 
+            gap:8px; 
+            padding:8px 12px; 
+            border-radius:8px; 
+            font-size:14px; 
+            font-weight:600; 
+            color:#374151; 
+            text-decoration:none; 
+            transition: all 0.2s ease;
+        }
+        
         .side-link:hover { background:#f9fafb; }
         .side-link.active { background:#ecfeff; color:#0e7490; outline:1px solid rgba(14,116,144,.2); }
+        
+        .dark .side-link { color:#e2e8f0; }
+        .dark .side-link:hover { background:rgba(51, 65, 85, 0.5); }
+        .dark .side-link.active { background:rgba(14, 116, 144, 0.2); color:#67e8f9; }
+        
         .side-section { margin-top:12px; }
-        .side-title { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#6b7280; margin:12px 0 6px; }
+        .side-title { 
+            font-size:11px; 
+            text-transform:uppercase; 
+            letter-spacing:.08em; 
+            color:#6b7280; 
+            margin:12px 0 6px; 
+        }
+        .dark .side-title { color:#94a3b8; }
     </style>
 </head>
-<body class="text-slate-100">
+<body class="text-gray-900 dark:text-slate-100">
     <div class="min-h-screen">
         {{-- Top Navigation (role-aware) --}}
         @include('layouts.navigation')
@@ -41,7 +87,7 @@
         {{-- Page Heading (optional) --}}
         @hasSection('header')
             <header class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-                <div class="glass shadow-sm ring-1 ring-gray-200 rounded-lg">
+                <div class="glass shadow-sm ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg">
                     <div class="px-4 sm:px-6 lg:px-8 py-5">
                         @yield('header')
                     </div>
@@ -53,12 +99,12 @@
         @if (session('success') || session('error'))
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
                 @if (session('success'))
-                    <div class="rounded-md bg-green-50 p-4 ring-1 ring-green-600/20 text-green-800">
+                    <div class="rounded-md bg-green-50 dark:bg-green-900/20 p-4 ring-1 ring-green-600/20 dark:ring-green-400/20 text-green-800 dark:text-green-200">
                         {{ session('success') }}
                     </div>
                 @endif
                 @if (session('error'))
-                    <div class="rounded-md bg-red-50 p-4 ring-1 ring-red-600/20 text-red-800 mt-3">
+                    <div class="rounded-md bg-red-50 dark:bg-red-900/20 p-4 ring-1 ring-red-600/20 dark:ring-red-400/20 text-red-800 dark:text-red-200 mt-3">
                         {{ session('error') }}
                     </div>
                 @endif
@@ -77,7 +123,7 @@
                 {{-- Admin: sidebar + content --}}
                 <div class="admin-grid">
                     {{-- Sidebar --}}
-                    <aside class="glass ring-1 ring-gray-200 rounded-lg p-4 h-fit">
+                    <aside class="glass ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg p-4 h-fit">
                         {{-- Custom sidebar hook (optional) --}}
                         @hasSection('sidebar')
                             @yield('sidebar')
@@ -123,7 +169,7 @@
                     </aside>
 
                     {{-- Main content --}}
-                    <div class="glass shadow-sm ring-1 ring-gray-200 rounded-lg">
+                    <div class="glass shadow-sm ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg">
                         <div class="px-4 sm:px-6 lg:px-8 py-6">
                             @yield('content')
                         </div>
@@ -131,7 +177,7 @@
                 </div>
             @else
                 {{-- Client/Plumber/Guest: single-column card --}}
-                <main class="glass shadow-sm ring-1 ring-gray-200 rounded-lg">
+                <main class="glass shadow-sm ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg">
                     <div class="px-4 sm:px-6 lg:px-8 py-6">
                         @yield('content')
                     </div>

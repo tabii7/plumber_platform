@@ -41,7 +41,7 @@
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('admin.requests.index') }}" class="nav-link">
+        <a href="{{ route('requests.index') }}" class="nav-link">
             <i class="fas fa-tools"></i>
             <span>Service Requests</span>
         </a>

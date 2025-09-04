@@ -1,6 +1,5 @@
 <?php
 
-// database/seeders/WaDefaultSeeder.php
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -11,128 +10,153 @@ class WaDefaultSeeder extends Seeder
 {
     public function run(): void
     {
-        // Client flow (any message triggers this for clients)
+        /**
+         * Client Flow
+         */
         $client = WaFlow::updateOrCreate(
             ['code' => 'client_flow'],
             ['name' => 'Client Flow', 'entry_keyword' => 'any', 'target_role' => 'client', 'is_active' => true]
         );
 
-        // 1) Welcome/confirm city -> buttons YES/NO
+        // C0 — greet/confirm area
         WaNode::updateOrCreate(
-            ['flow_id' => $client->id, 'code' => 'confirm_city'],
+            ['flow_id' => $client->id, 'code' => 'C0'],
             [
                 'type' => 'buttons',
                 'body' => 'Hello {{first_name}}, do you need a plumber in {{postal_code}} - {{city}}?',
                 'footer' => 'Reply with buttons',
                 'options_json' => [
-                    ['id' => 'yes', 'text' => 'YES'],
-                    ['id' => 'no',  'text' => 'NO'],
+                    ['id' => 'yes', 'text' => 'Yes'],
+                    ['id' => 'no',  'text' => 'No'],
                 ],
                 'next_map_json' => [
-                    'yes' => 'service_list',
-                    'no'  => 'no_help_needed',
+                    'yes' => 'C1',
+                    '1'   => 'C1',
+                    'no'  => 'goodbye',
+                    '2'   => 'goodbye',
+                    'default' => 'C1',
                 ],
                 'sort' => 10,
             ]
         );
 
-        // 2) Services selection -> text menu
+        // C1 — problem
         WaNode::updateOrCreate(
-            ['flow_id' => $client->id, 'code' => 'service_list'],
+            ['flow_id' => $client->id, 'code' => 'C1'],
             [
-                'type' => 'text',
-                'body' => "What do you need help with? Please reply with the number:\n\n1. Urgent plumber\n2. Emergency plumber\n3. 24/7 plumber\n4. Sanitary repair\n5. Toilet blocked\n6. Toilet overflowing\n7. Drain blocked\n8. Sink not draining\n9. Bathroom tap leaking\n10. Kitchen drain blocked\n11. Water leak\n12. Leaking pipe repair\n13. Low water pressure",
+                'type' => 'buttons',
+                'body' => "What do you need help with?",
+                'options_json' => [
+                    ['id' => 'leak',         'text' => 'Leak'],
+                    ['id' => 'blockage',     'text' => 'Blockage / Drain'],
+                    ['id' => 'heating',      'text' => 'Heating / Boiler'],
+                    ['id' => 'installation', 'text' => 'Installation / Replacement'],
+                    ['id' => 'other',        'text' => 'Other'],
+                ],
+                'next_map_json' => [
+                    'leak'=>'C2','blockage'=>'C2','heating'=>'C2','installation'=>'C2','other'=>'C2',
+                    '1'=>'C2','2'=>'C2','3'=>'C2','4'=>'C2','5'=>'C2','default'=>'C2',
+                ],
                 'sort' => 20,
-                'next_map_json' => ['default' => 'service_selection'],
             ]
         );
 
-        // 2b) Service selection handler
+        // C2 — urgency
         WaNode::updateOrCreate(
-            ['flow_id' => $client->id, 'code' => 'service_selection'],
+            ['flow_id' => $client->id, 'code' => 'C2'],
             [
-                'type' => 'text',
-                'body' => 'Please type a short message for the plumber (e.g., "Water pressure is low").',
-                'sort' => 21,
-                'next_map_json' => ['default' => 'confirm_broadcast'],
+                'type' => 'buttons',
+                'body' => "How urgent is it?",
+                'options_json' => [
+                    ['id' => 'high',   'text' => 'High — max 60 min'],
+                    ['id' => 'normal', 'text' => 'Normal — max 2 hours'],
+                    ['id' => 'later',  'text' => 'Later today / schedule'],
+                ],
+                'next_map_json' => [
+                    'high'=>'C3','normal'=>'C3','later'=>'C3',
+                    '1'=>'C3','2'=>'C3','3'=>'C3','default'=>'C3',
+                ],
+                'sort' => 30,
             ]
         );
 
-        // 3) Ask description -> collect_text
+        // C3 — description
         WaNode::updateOrCreate(
-            ['flow_id' => $client->id, 'code' => 'ask_description'],
+            ['flow_id' => $client->id, 'code' => 'C3'],
             [
                 'type' => 'collect_text',
                 'body' => 'Please type a short message for the plumber (e.g., "Water pressure is low").',
-                'sort' => 30,
-                'next_map_json' => ['default' => 'confirm_broadcast'],
-            ]
-        );
-
-        // 4) Confirm broadcast -> buttons YES/NO
-        WaNode::updateOrCreate(
-            ['flow_id' => $client->id, 'code' => 'confirm_broadcast'],
-            [
-                'type' => 'buttons',
-                'body' => 'Do you want to send your request to all available plumbers in your area?',
-                'options_json' => [
-                    ['id' => 'yes', 'text' => 'YES, send'],
-                    ['id' => 'no',  'text' => 'NO, cancel'],
-                ],
-                'next_map_json' => [
-                    'yes' => 'dispatch',
-                    'no'  => 'goodbye',
-                ],
+                'next_map_json' => ['default' => 'C4'],
                 'sort' => 40,
             ]
         );
 
-        // 5) Dispatch job
+        // C4 — consent to broadcast
         WaNode::updateOrCreate(
-            ['flow_id' => $client->id, 'code' => 'dispatch'],
-            [
-                'type' => 'dispatch',
-                'body' => '✅ Request sent. Plumbers will reply soon.',
-                'sort' => 50,
-                'next_map_json' => ['default' => 'goodbye'],
-            ]
-        );
-
-        // 6) No help needed
-        WaNode::updateOrCreate(
-            ['flow_id' => $client->id, 'code' => 'no_help_needed'],
+            ['flow_id' => $client->id, 'code' => 'C4'],
             [
                 'type' => 'buttons',
-                'body' => 'No problem! If you change your mind or need help later, just send us a message.',
+                'body' => 'Do you want to send your request to all available plumbers in your area?',
                 'options_json' => [
-                    ['id' => 'change_mind', 'text' => 'Actually, I do need help'],
-                    ['id' => 'goodbye', 'text' => 'Thanks, goodbye'],
+                    ['id' => 'yes', 'text' => 'Yes, send'],
+                    ['id' => 'no',  'text' => 'No, cancel'],
                 ],
                 'next_map_json' => [
-                    'change_mind' => 'service_list',
-                    'goodbye' => 'goodbye',
+                    'yes'=>'C5','1'=>'C5','no'=>'goodbye','2'=>'goodbye','default'=>'C5',
                 ],
-                'sort' => 55,
+                'sort' => 50,
             ]
         );
 
-        // 7) Goodbye
+        // C5 — waiting
+        WaNode::updateOrCreate(
+            ['flow_id' => $client->id, 'code' => 'C5'],
+            [
+                'type' => 'text',
+                'body' => "✅ Request sent. Plumbers will reply soon.\nType 'offers' anytime to view responses.",
+                'sort' => 60,
+            ]
+        );
+
+        // C6 — offers list placeholder
+        WaNode::updateOrCreate(
+            ['flow_id' => $client->id, 'code' => 'C6'],
+            [
+                'type' => 'text',
+                'body' => "Plumbers who accepted your job will appear here.\nSend a number like 1, 2, 3 to view details.",
+                'sort' => 70,
+            ]
+        );
+
+        // C7 — offer details placeholder
+        WaNode::updateOrCreate(
+            ['flow_id' => $client->id, 'code' => 'C7'],
+            [
+                'type' => 'text',
+                'body' => "Confirm selection?\nReply 'yes' to select, 'no' to go back, or '3' to choose again.",
+                'sort' => 80,
+            ]
+        );
+
+        // goodbye
         WaNode::updateOrCreate(
             ['flow_id' => $client->id, 'code' => 'goodbye'],
             [
                 'type' => 'text',
                 'body' => 'Thanks for using our service! 👋',
-                'sort' => 60,
+                'sort' => 90,
             ]
         );
 
-        // Plumber flow
+        /**
+         * Plumber Flow
+         */
         $plumber = WaFlow::updateOrCreate(
             ['code' => 'plumber_flow'],
             ['name' => 'Plumber Flow', 'entry_keyword' => 'any', 'target_role' => 'plumber', 'is_active' => true]
         );
 
-        // P0 (NO numeric prefixes in labels -> avoids “1) 1.”)
+        // P0 — new job broadcast
         WaNode::updateOrCreate(
             ['flow_id' => $plumber->id, 'code' => 'P0'],
             [
@@ -143,15 +167,13 @@ class WaDefaultSeeder extends Seeder
                     ['id' => 'no',  'text' => 'No, skip'],
                 ],
                 'next_map_json' => [
-                    'yes' => 'P1',
-                    '1'   => 'P1',
-                    'no'  => 'P_END',
-                    '2'   => 'P_END',
+                    'yes'=>'P1','1'=>'P1','no'=>'P_END','2'=>'P_END',
                 ],
                 'sort' => 10,
             ]
         );
 
+        // P1 — plumber message
         WaNode::updateOrCreate(
             ['flow_id' => $plumber->id, 'code' => 'P1'],
             [
@@ -162,6 +184,7 @@ class WaDefaultSeeder extends Seeder
             ]
         );
 
+        // P_END — ack
         WaNode::updateOrCreate(
             ['flow_id' => $plumber->id, 'code' => 'P_END'],
             [
@@ -171,7 +194,9 @@ class WaDefaultSeeder extends Seeder
             ]
         );
 
-        // Unregistered flow
+        /**
+         * Unregistered
+         */
         $unregistered = WaFlow::updateOrCreate(
             ['code' => 'unregistered_flow'],
             ['name' => 'Unregistered Flow', 'entry_keyword' => 'any', 'target_role' => 'any', 'is_active' => true]
@@ -182,6 +207,23 @@ class WaDefaultSeeder extends Seeder
             [
                 'type' => 'text',
                 'body' => 'This WhatsApp number is not registered. Please create your account at loodgieter.app',
+                'sort' => 10,
+            ]
+        );
+
+        /**
+         * Rating Flow
+         */
+        $rating = WaFlow::updateOrCreate(
+            ['code' => 'rating_flow'],
+            ['name' => 'Rating Flow', 'entry_keyword' => 'any', 'target_role' => 'client', 'is_active' => true]
+        );
+
+        WaNode::updateOrCreate(
+            ['flow_id' => $rating->id, 'code' => 'R1'],
+            [
+                'type' => 'text',
+                'body' => 'Please reply with a number from 1 to 5.',
                 'sort' => 10,
             ]
         );

@@ -6,27 +6,32 @@
 
 @section('sidebar-nav')
     <div class="nav-item">
-        <a href="{{ route('dashboard') }}" class="nav-link active">
+        <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('plumber.coverage.index') }}" class="nav-link">
+        <a href="{{ route('plumber.coverage.index') }}" class="nav-link {{ request()->routeIs('plumber.coverage.*') ? 'active' : '' }}">
             <i class="fas fa-map-marker-alt"></i>
             <span>Coverage Areas</span>
         </a>
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('plumber.schedule.index') }}" class="nav-link">
+        <a href="{{ route('plumber.schedule.index') }}" class="nav-link {{ request()->routeIs('plumber.schedule.*') ? 'active' : '' }}">
             <i class="fas fa-clock"></i>
             <span>Schedule</span>
         </a>
     </div>
     
-
+    <div class="nav-item">
+        <a href="{{ route('requests.index') }}" class="nav-link {{ request()->routeIs('requests.*') ? 'active' : '' }}">
+            <i class="fas fa-tools"></i>
+            <span>My Requests</span>
+        </a>
+    </div>
     
     <div class="nav-item">
         <a href="{{ route('support') }}" class="nav-link">

@@ -245,6 +245,7 @@
       color: var(--error);
       font-weight: 600;
     }
+
   </style>
 </head>
 <body>
@@ -291,6 +292,15 @@
         <fieldset class="section-card">
           <legend>YOUR DETAILS</legend>
           <div class="field-grid">
+            <div class="field span-2">
+              <label class="label" for="whatsapp_number">WhatsApp number <span class="required">*</span></label>
+              <div class="control">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M16.5 13.4c-.3-.2-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.1.1-.3.1-.6 0-1.6-.6-2.9-1.8-3.8-3.4-.1-.3 0-.5.1-.6.1-.1.2-.3.3-.5.1-.1.1-.3.2-.5 0-.2 0-.4-.1-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1.1 1.1-1.1 2.7s1.1 3.1 1.2 3.3c.1.2 2.1 3.3 5.1 4.6.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.8-1.4.2-.7.2-1.3.1-1.4-.1-.2-.2-.2-.5-.4zM12 2a10 10 0 0 0-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                <input id="whatsapp_number" name="whatsapp_number" value="{{ old('whatsapp_number') }}" placeholder="324xxxxxxxx" required>
+              </div>
+              @error('whatsapp_number')<div class="error">{{ $message }}</div>@enderror
+            </div>
+
             <div class="field span-2">
               <label class="label" for="full_name">Full name <span class="required">*</span></label>
               <div class="control">
@@ -381,19 +391,10 @@
           </div>
         </fieldset>
 
-        <!-- CONTACT -->
+        <!-- BUSINESS DETAILS -->
         <fieldset class="section-card">
-          <legend>CONTACT</legend>
+          <legend>BUSINESS DETAILS</legend>
           <div class="field-grid">
-            <div class="field">
-              <label class="label" for="whatsapp_number">WhatsApp number <span class="required">*</span></label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M16.5 13.4c-.3-.2-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.1.1-.3.1-.6 0-1.6-.6-2.9-1.8-3.8-3.4-.1-.3 0-.5.1-.6.1-.1.2-.3.3-.5.1-.1.1-.3.2-.5 0-.2 0-.4-.1-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1.1 1.1-1.1 2.7s1.1 3.1 1.2 3.3c.1.2 2.1 3.3 5.1 4.6.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.8-1.4.2-.7.2-1.3.1-1.4-.1-.2-.2-.2-.5-.4zM12 2a10 10 0 0 0-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                <input id="whatsapp_number" name="whatsapp_number" value="{{ old('whatsapp_number') }}" placeholder="324xxxxxxxx" required>
-              </div>
-              @error('whatsapp_number')<div class="error">{{ $message }}</div>@enderror
-            </div>
-
             <div class="field">
               <label class="label" for="btw_number">VAT number</label>
               <div class="control">
@@ -491,26 +492,56 @@
       }
 
       async function searchSmart(qUser) {
+        console.log('searchSmart called with:', qUser); // Debug log
+        
         // 1) Probeer Vlaanderen Suggestion op genormaliseerde query
         const qVL = normalizeForVL(qUser);
+        console.log('Normalized query:', qVL); // Debug log
         let vlS = [];
         try {
-          vlS = await fetchJSON(`https://geo.api.vlaanderen.be/geolocation/v4/Suggestion?q=${encodeURIComponent(qVL)}&c=10`);
-        } catch(e) {}
+          const vlUrl = `https://geo.api.vlaanderen.be/geolocation/v4/Suggestion?q=${encodeURIComponent(qVL)}&c=10`;
+          console.log('Trying Vlaanderen Suggestion API:', vlUrl); // Debug log
+          vlS = await fetchJSON(vlUrl);
+          console.log('Vlaanderen Suggestion result:', vlS); // Debug log
+        } catch(e) {
+          console.log('Vlaanderen Suggestion API error:', e.message); // Debug log
+        }
 
-        if (Array.isArray(vlS) && vlS.length) return {data:vlS, src:'vl'};
+        if (Array.isArray(vlS) && vlS.length) {
+          console.log('Using Vlaanderen Suggestion results'); // Debug log
+          return {data:vlS, src:'vl'};
+        }
 
         // 2) Probeer Vlaanderen Location direct (soms vindt dit wel wat Suggestion mist)
         let vlL = [];
         try {
-          vlL = await fetchJSON(`https://geo.api.vlaanderen.be/geolocation/v4/Location?q=${encodeURIComponent(qVL)}`);
-        } catch(e) {}
+          const vlLocUrl = `https://geo.api.vlaanderen.be/geolocation/v4/Location?q=${encodeURIComponent(qVL)}`;
+          console.log('Trying Vlaanderen Location API:', vlLocUrl); // Debug log
+          vlL = await fetchJSON(vlLocUrl);
+          console.log('Vlaanderen Location result:', vlL); // Debug log
+        } catch(e) {
+          console.log('Vlaanderen Location API error:', e.message); // Debug log
+        }
         
         if (Array.isArray(vlL) && vlL.length) {
+          console.log('Using Vlaanderen Location results'); // Debug log
           // giet om naar Suggestion-achtig formaat voor weergave
           const mapped = vlL.map(x=>({Suggestion:{Label: formatVLLabelFromLocation(x.Location||{})}, _vlLoc:x}));
           return {data:mapped, src:'vl'};
         }
+
+        // 3) Fallback OSM (heel België, tolerant voor volgorde)
+        try {
+          const osmUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&countrycodes=be&addressdetails=1&accept-language=nl&q=${encodeURIComponent(qUser)}`;
+          console.log('Trying OSM API:', osmUrl); // Debug log
+          const osm = await fetchJSON(osmUrl);
+          console.log('OSM result:', osm); // Debug log
+          return {data:osm, src:'osm'};
+        } catch(e) {
+          console.log('OSM API error:', e.message); // Debug log
+          throw e;
+        }
+      }
 
 
 
@@ -622,14 +653,21 @@
           return; 
         }
 
+        // Show loading state
+        sugg.innerHTML = `<div class="s-item"><span class="s-badge">...</span><span class="s-label">Searching...</span></div>`;
+        sugg.style.display = 'block';
+
         debounceId = setTimeout(async () => {
           try {
+            console.log('Searching for:', q); // Debug log
             const {data, src} = await searchSmart(q);
+            console.log('Search results:', data, src); // Debug log
             items = data || [];
             renderList(items, src);
           } catch(e) {
+            console.error('Address search error:', e); // Debug log
             items = [];
-            sugg.innerHTML = `<div class="s-item"><span class="s-badge">ERR</span><span class="s-label">Fout: ${escapeHtml(e.message)}</span></div>`;
+            sugg.innerHTML = `<div class="s-item"><span class="s-badge">ERR</span><span class="s-label">Error: ${escapeHtml(e.message)}</span></div>`;
             sugg.style.display = 'block';
           }
         }, 350); // Slightly longer to avoid rate limits

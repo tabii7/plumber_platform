@@ -4,8 +4,6 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PlumberController;
-use App\Http\Controllers\RequestController;
-use App\Http\Controllers\ClientRequestController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PostcodeController;
 // use App\Http\Controllers\AdminWhatsappController;
@@ -80,7 +78,6 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboards.client');
     })->name('client.dashboard');
 
-    Route::resource('/requests', ClientRequestController::class);
 
     // Profile management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -143,6 +140,15 @@ Route::middleware(['auth'])->group(function () {
 
 
 
+// Request Management Routes (for all authenticated users)
+Route::middleware(['auth'])->group(function () {
+    // WaRequest routes
+    Route::get('/requests', [App\Http\Controllers\WaRequestController::class, 'index'])->name('requests.index');
+    Route::get('/requests/{request}', [App\Http\Controllers\WaRequestController::class, 'show'])->name('requests.show');
+    Route::post('/requests/{request}/complete', [App\Http\Controllers\WaRequestController::class, 'complete'])->name('requests.complete');
+    Route::get('/requests/stats', [App\Http\Controllers\WaRequestController::class, 'getStats'])->name('requests.stats');
+});
+
 // Admin routes 
 Route::middleware(['auth', 'admin'])->group(function () {
     // Dashboard
@@ -158,9 +164,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->only(['index','show','edit','update','destroy'])
         ->names('clients');
 
-    // Requests (admin)
-    Route::resource('/admin/requests', RequestController::class)
-        ->names('admin.requests');
+
+    // Admin WaRequest management
+    Route::post('/requests/{waRequest}/update-status', [App\Http\Controllers\WaRequestController::class, 'updateStatus'])->name('requests.update-status');
 
     // WhatsApp (use the controller class you actually created)
     Route::get('/admin/whatsapp',        [AdminWhatsAppController::class, 'index'])->name('admin.whatsapp');
@@ -178,8 +184,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
 require __DIR__.'/auth.php';
 
 // ✅ Custom registration routes overriding Breeze defaults
-Route::get('/register', [RegisterController::class, 'show'])->name('register');
-Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+// Main register route redirects to client registration only
+Route::get('/register', function() {
+    return redirect()->route('client.register');
+})->name('register');
 
 // Separate registration routes for clients and plumbers
 Route::get('/client/register', [App\Http\Controllers\Auth\ClientRegistrationController::class, 'create'])->name('client.register');
@@ -209,6 +217,10 @@ Route::get('/test-register', function () {
 
 Route::get('/test-address', function () {
     return view('test-address');
+});
+
+Route::get('/test-dark-mode', function () {
+    return view('test-dark-mode');
 });
 
 

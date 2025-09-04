@@ -1282,7 +1282,7 @@ class WaRuntimeController extends Controller
         $message = "📞 Contact Support\n\n";
         $message .= "For immediate assistance, please contact us:\n\n";
         $message .= "📧 Email: support@plumberplatform.com\n";
-        $message .= "📱 Phone: +32 123 456 789\n";
+        $message .= "📱 Phone: +32 490 46 80 09\n";
         $message .= "🌐 Website: " . config('app.url') . "/support\n\n";
         $message .= "Our support team is available 24/7 to help you.";
         

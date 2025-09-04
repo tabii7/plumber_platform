@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Request as ServiceRequest;
+use App\Models\WaRequest;
 use App\Models\Plumber;
 use App\Models\PlumberCoverage;
 
@@ -21,8 +21,8 @@ class AdminController extends Controller
         $activeSubscriptions = User::where('subscription_status', 'active')->count();
         
         // Service statistics
-        $totalRequests = ServiceRequest::count();
-        $completedJobs = ServiceRequest::where('status', 'completed')->count();
+        $totalRequests = WaRequest::count();
+        $completedJobs = WaRequest::where('status', 'completed')->count();
         
         // Rating statistics
         $averageRating = 4.5; // This would come from actual rating data

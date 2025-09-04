@@ -25,6 +25,13 @@
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
             color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Dark mode styles */
+        body.dark {
+            background-color: #0f172a;
+            color: #e2e8f0;
         }
         
         .navbar {
@@ -32,6 +39,12 @@
             backdrop-filter: blur(10px);
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
             padding: 1rem 0;
+            transition: background-color 0.3s ease;
+        }
+        
+        body.dark .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
         }
         
         .navbar-brand {
@@ -51,6 +64,14 @@
             color: #10b981 !important;
         }
         
+        body.dark .nav-link {
+            color: #e2e8f0 !important;
+        }
+        
+        body.dark .nav-link:hover {
+            color: #10b981 !important;
+        }
+        
         .btn-primary {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             border: none;
@@ -65,6 +86,25 @@
             background: linear-gradient(135deg, #059669 0%, #047857 100%);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Custom Plumber Button Styling */
+        .btn-plumber {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border: none;
+            color: white;
+            padding: 0.875rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-plumber:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            color: white;
         }
         
         .btn-outline {
@@ -81,6 +121,29 @@
             background: #e2e8f0;
             color: #1e293b;
             border-color: #e2e8f0;
+        }
+
+        /* Additional outline button styles for navbar */
+        .navbar .btn-outline {
+            border-color: #10b981;
+            color: #10b981;
+        }
+        
+        .navbar .btn-outline:hover {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        /* Navbar button sizing and spacing */
+        .navbar .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .navbar .btn-plumber {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
         }
         
         .hero-section {
@@ -189,6 +252,20 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
         }
         
+        body.dark .service-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+        }
+        
+        body.dark .service-card h3 {
+            color: #f1f5f9;
+        }
+        
+        body.dark .service-card p {
+            color: #cbd5e1;
+        }
+        
         .service-icon {
             width: 60px;
             height: 60px;
@@ -221,6 +298,10 @@
             background: #f8fafc;
         }
         
+        body.dark .about-section {
+            background: #0f172a;
+        }
+        
         .about-content h2 {
             font-size: 2.5rem;
             font-weight: 700;
@@ -232,6 +313,14 @@
             font-size: 1.1rem;
             color: #6b7280;
             margin-bottom: 2rem;
+        }
+        
+        body.dark .about-content h2 {
+            color: #f1f5f9;
+        }
+        
+        body.dark .about-content p {
+            color: #cbd5e1;
         }
         
         .feature-item {
@@ -266,6 +355,14 @@
         .feature-text p {
             color: #6b7280;
             margin: 0;
+        }
+        
+        body.dark .feature-text h4 {
+            color: #f1f5f9;
+        }
+        
+        body.dark .feature-text p {
+            color: #cbd5e1;
         }
         
         .contact-section {
@@ -443,13 +540,40 @@
           background: linear-gradient(135deg, #059669 0%, #047857 100%);
         }
 
+        /* Change blue outline buttons to green */
+        .pricing-card .btn.btn-outline-primary {
+          color: #10b981;
+          border-color: #10b981;
+          background: transparent;
+        }
+        
+        .pricing-card .btn.btn-outline-primary:hover {
+          color: white;
+          background: #10b981;
+          border-color: #10b981;
+        }
+
         .pricing-card.featured {
           border: 2px solid #10b981;
           box-shadow: 0 24px 60px rgba(16,185,129,.18);
           position: relative;
         }
+
         .featured-badge {
-          position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+          position: absolute;
+          top: -12px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #10b981;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          box-shadow: 0 4px 12px rgba(16,185,129,.3);
+        }
           background:#10b981; color:#0b1f17; /* dark teal text for contrast */
           padding:8px 14px; border-radius:999px; font-weight:800; font-size:.82rem;
           border: 1px solid rgba(2,6,23,.08);
@@ -491,9 +615,6 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}">Home</a>
-                    </li>
                     @auth
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('dashboard') }}">Dashboard</a>
@@ -508,11 +629,17 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#pricing">Pricing</a>
                     </li>
-
+                    
+                    <li class="nav-item d-flex align-items-center me-3">
+                        <x-dark-mode-toggle />
+                    </li>
 
                     @guest
-                        <li class="nav-item ms-2">
-                            <a href="{{ url('/login') }}" class="btn btn-primary">Get Started</a>
+                                            <li class="nav-item me-2">
+                        <a href="{{ url('/login') }}" class="btn btn-outline">Login</a>
+                    </li>
+                        <li class="nav-item">
+                            <a href="/client/register" class="btn btn-primary">Get Started</a>
                         </li>
                     @else
                         <li class="nav-item dropdown">
@@ -549,13 +676,15 @@
                         <p class="hero-subtitle">Reliable, licensed plumbers available 24/7 for all your plumbing needs. Emergency repairs, installations, and maintenance with guaranteed quality.</p>
                         
                         <div class="d-flex flex-wrap gap-3 mb-4">
-                            <a href="#pricing" class="btn btn-primary btn-lg">
-                                <i class="fas fa-crown me-2"></i>View Pricing Plans
-                            </a>
-                            
                             @guest
                                 <a href="{{ url('/login') }}" class="btn btn-outline btn-lg">
-                                    <i class="fas fa-user-plus me-2"></i>Get Started
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                                <a href="/client/register" class="btn btn-primary btn-lg me-3">
+                                    <i class="fas fa-user me-2"></i>Register as Client
+                                </a>
+                                <a href="/plumber/register" class="btn btn-plumber btn-lg me-3">
+                                    <i class="fas fa-tools me-2"></i>Register as Plumber
                                 </a>
                             @else
                                 <a href="{{ route('dashboard') }}" class="btn btn-outline btn-lg">
@@ -781,9 +910,10 @@
         </div>
       </div>
 
-      <!-- Client Plan -->
+      <!-- Client Plan (Featured) -->
       <div class="col-lg-4 col-md-6">
-        <div class="pricing-card">
+        <div class="pricing-card featured">
+          <div class="featured-badge">MOST POPULAR</div>
           <div class="pricing-icon"><i class="fas fa-home"></i></div>
           <h3>Client Plan</h3>
 
@@ -817,10 +947,9 @@
         </div>
       </div>
 
-      <!-- Company Plan (Featured) -->
+      <!-- Company Plan -->
       <div class="col-lg-4 col-md-6">
-        <div class="pricing-card featured">
-          <div class="featured-badge">MOST POPULAR</div>
+        <div class="pricing-card">
           <div class="pricing-icon"><i class="fas fa-building"></i></div>
           <h3>Company Plan</h3>
 
@@ -871,11 +1000,11 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="contact-card">
                         <div class="contact-icon">
-                            <i class="fas fa-phone"></i>
+                            <i class="fab fa-whatsapp"></i>
                         </div>
                         <h3>Emergency Hotline</h3>
                         <p>24/7 Emergency Plumbing Services</p>
-                        <a href="tel:+1234567890">+1 (234) 567-890</a>
+                        <a href="https://wa.me/32490468009" target="_blank">+32 490 46 80 09</a>
                     </div>
                 </div>
                 
@@ -886,7 +1015,7 @@
                         </div>
                         <h3>Email Us</h3>
                         <p>Get in touch for quotes and inquiries</p>
-                        <a href="mailto:info@professionalplumber.com">info@professionalplumber.com</a>
+                        <a href="mailto:support@loodgieter.app">support@loodgieter.app</a>
                     </div>
                 </div>
                 
@@ -897,22 +1026,25 @@
                         </div>
                         <h3>Service Hours</h3>
                         <p>Available when you need us most</p>
-                        <span>Mon-Fri: 8AM-8PM<br>Sat: 9AM-6PM<br>Sun: Emergency Only</span>
+                        <span style="font-weight: bold; color: #10b981;">ALWAYS</span>
                     </div>
                 </div>
             </div>
             
-                          <div class="text-center mt-5">
-                  <a href="/client/register" class="btn btn-primary btn-lg me-3">
-                      <i class="fas fa-user me-2"></i>Register as Client
-                  </a>
-                  <a href="/plumber/register" class="btn btn-success btn-lg me-3">
-                      <i class="fas fa-tools me-2"></i>Register as Plumber
-                  </a>
-                  <a href="{{ url('/login') }}" class="btn btn-outline btn-lg" style="border-color: white; color: white;">
-                      <i class="fas fa-sign-in-alt me-2"></i>Login
-                  </a>
-              </div>
+
+        </div>
+    </section>
+
+    <!-- Technical Support Section -->
+    <section class="section" style="background: #f8f9fa; padding: 40px 0;">
+        <div class="container">
+            <div class="text-center">
+                <h3 style="color: #6b7280; margin-bottom: 20px;">Technische Ondersteuning</h3>
+                <p style="color: #6b7280; margin-bottom: 20px;">Need technical help? Our support team is here to assist you.</p>
+                <a href="https://help.diensten.pro" target="_blank" class="btn btn-outline-secondary">
+                    <i class="fas fa-headset me-2"></i>Naar Diensten.Pro Help desk
+                </a>
+            </div>
         </div>
     </section>
 
@@ -921,13 +1053,13 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p>&copy; © 2025 Professional Plumbing Services. All rights reserved.</p>
+                    <p>&copy; 2025 diensten.pro - All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <div class="footer-links">
-                        <a href="{{ route('privacy') }}" class="footer-link">Privacy & Policy</a>
+                    <div class="footer-links" style="font-size: 0.8em; opacity: 0.7;">
+                        <a href="{{ route('privacy') }}" class="footer-link">Privacy</a>
                         <span class="footer-separator">|</span>
-                        <a href="{{ route('terms') }}" class="footer-link">Terms & Conditions</a>
+                        <a href="{{ route('terms') }}" class="footer-link">T&C</a>
                     </div>
                 </div>
             </div>
@@ -936,5 +1068,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>

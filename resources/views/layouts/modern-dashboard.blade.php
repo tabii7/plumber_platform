@@ -38,6 +38,13 @@
             background-color: #f8f9fa;
             color: #525f7f;
             line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Dark mode styles */
+        body.dark {
+            background-color: #0f172a;
+            color: #e2e8f0;
         }
 
         /* Sidebar Styles */
@@ -123,6 +130,12 @@
             position: sticky;
             top: 0;
             z-index: 999;
+            transition: background-color 0.3s ease;
+        }
+        
+        body.dark .header {
+            background: #1e293b;
+            box-shadow: 0 0 2rem 0 rgba(0, 0, 0, 0.3);
         }
 
         .header-left {
@@ -145,12 +158,24 @@
         .sidebar-toggle:hover {
             background-color: #f8f9fa;
         }
+        
+        body.dark .sidebar-toggle {
+            color: #e2e8f0;
+        }
+        
+        body.dark .sidebar-toggle:hover {
+            background-color: #334155;
+        }
 
         .page-title {
             font-size: 1.5rem;
             font-weight: 600;
             color: #172b4d;
             margin: 0;
+        }
+        
+        body.dark .page-title {
+            color: #f1f5f9;
         }
 
         .header-right {
@@ -172,6 +197,14 @@
 
         .user-menu:hover {
             background: #e9ecef;
+        }
+        
+        body.dark .user-menu {
+            background: #334155;
+        }
+        
+        body.dark .user-menu:hover {
+            background: #475569;
         }
 
         .user-avatar {
@@ -202,6 +235,14 @@
             color: #8898aa;
             text-transform: capitalize;
         }
+        
+        body.dark .user-name {
+            color: #f1f5f9;
+        }
+        
+        body.dark .user-role {
+            color: #94a3b8;
+        }
 
         /* Content Area */
         .content {
@@ -215,6 +256,7 @@
             box-shadow: 0 0 2rem 0 rgba(136, 152, 170, 0.15);
             border: none;
             margin-bottom: 1.5rem;
+            transition: background-color 0.3s ease;
         }
 
         .card-header {
@@ -223,10 +265,144 @@
             padding: 1.5rem;
             font-weight: 600;
             color: #172b4d;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
 
         .card-body {
             padding: 1.5rem;
+        }
+        
+        body.dark .card {
+            background: #1e293b;
+            box-shadow: 0 0 2rem 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        body.dark .card-header {
+            background: transparent;
+            border-bottom: 1px solid #334155;
+            color: #f1f5f9;
+        }
+        
+        body.dark .card-body {
+            color: #e2e8f0;
+        }
+        
+        body.dark .text-muted {
+            color: #94a3b8 !important;
+        }
+        
+        body.dark .fw-semibold {
+            color: #f1f5f9 !important;
+        }
+        
+        body.dark h1, body.dark h2, body.dark h3, body.dark h4, body.dark h5, body.dark h6 {
+            color: #f1f5f9 !important;
+        }
+        
+        body.dark p {
+            color: #e2e8f0;
+        }
+        
+        body.dark .btn-outline-primary {
+            color: #60a5fa;
+            border-color: #60a5fa;
+        }
+        
+        body.dark .btn-outline-primary:hover {
+            background-color: #60a5fa;
+            border-color: #60a5fa;
+            color: #1e293b;
+        }
+        
+        body.dark .btn-outline-secondary {
+            color: #94a3b8;
+            border-color: #94a3b8;
+        }
+        
+        body.dark .btn-outline-secondary:hover {
+            background-color: #94a3b8;
+            border-color: #94a3b8;
+            color: #1e293b;
+        }
+        
+        body.dark .btn-outline-info {
+            color: #67e8f9;
+            border-color: #67e8f9;
+        }
+        
+        body.dark .btn-outline-info:hover {
+            background-color: #67e8f9;
+            border-color: #67e8f9;
+            color: #1e293b;
+        }
+        
+        body.dark .btn-outline-warning {
+            color: #fbbf24;
+            border-color: #fbbf24;
+        }
+        
+        body.dark .btn-outline-warning:hover {
+            background-color: #fbbf24;
+            border-color: #fbbf24;
+            color: #1e293b;
+        }
+        
+        body.dark .btn-outline-success {
+            color: #34d399;
+            border-color: #34d399;
+        }
+        
+        body.dark .btn-outline-success:hover {
+            background-color: #34d399;
+            border-color: #34d399;
+            color: #1e293b;
+        }
+        
+        body.dark .btn-outline-danger {
+            color: #f87171;
+            border-color: #f87171;
+        }
+        
+        body.dark .btn-outline-danger:hover {
+            background-color: #f87171;
+            border-color: #f87171;
+            color: #1e293b;
+        }
+        
+        body.dark .border {
+            border-color: #334155 !important;
+        }
+        
+        body.dark .alert-success {
+            background-color: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+        
+        body.dark .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+        
+        body.dark .badge {
+            color: #1e293b;
+        }
+        
+        body.dark .badge.bg-success {
+            background-color: #10b981 !important;
+        }
+        
+        body.dark .badge.bg-warning {
+            background-color: #f59e0b !important;
+        }
+        
+        body.dark .badge.bg-info {
+            background-color: #3b82f6 !important;
+        }
+        
+        body.dark .badge.bg-danger {
+            background-color: #ef4444 !important;
         }
 
         /* Stats Cards */
@@ -348,6 +524,8 @@
             </div>
             
             <div class="header-right">
+                <x-dark-mode-toggle />
+                
                 <div class="user-menu">
                     <div class="user-avatar">
                         {{ strtoupper(substr(Auth::user()->full_name ?? Auth::user()->email, 0, 1)) }}
@@ -389,6 +567,9 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <script>
         // Sidebar toggle functionality

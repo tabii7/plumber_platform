@@ -26,8 +26,6 @@
         </a>
     </div>
     
-
-    
     <div class="nav-item">
         <a href="{{ route('support') }}" class="nav-link">
             <i class="fas fa-headset"></i>
@@ -44,546 +42,27 @@
 @endsection
 
 @section('content')
-<style>
-.schedule-container {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    min-height: 100vh;
-    padding: 2rem;
-}
-
-.schedule-header {
-    background: linear-gradient(135deg, #344767 0%, #1a1a1a 100%);
-    color: white;
-    padding: 2.5rem;
-    border-radius: 1rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.header-badge {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-.header-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: white;
-}
-
-.header-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    margin: 0;
-}
-
-.schedule-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    overflow: hidden;
-    margin-bottom: 2rem;
-}
-
-.card-header-section {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 2rem;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.card-header-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    border-radius: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.card-header-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #172b4d;
-    margin-bottom: 0.5rem;
-}
-
-.card-header-subtitle {
-    color: #6c757d;
-    margin: 0;
-}
-
-.card-body-section {
-    padding: 2rem;
-}
-
-.day-schedule-card {
-    background: #f8f9fa;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border: 1px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.day-schedule-card:hover {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-}
-
-.day-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.day-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.day-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-}
-
-.day-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #172b4d;
-    margin: 0;
-}
-
-.day-subtitle {
-    color: #6c757d;
-    font-size: 0.875rem;
-}
-
-.status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.status-badge.closed {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.status-badge.open24 {
-    background: #dcfce7;
-    color: #16a34a;
-}
-
-.status-badge.split {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.status-badge.fullday {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.mode-selector {
-    margin-bottom: 1.5rem;
-}
-
-.mode-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
-}
-
-.mode-option {
-    cursor: pointer;
-    border: 2px solid #e9ecef;
-    border-radius: 0.75rem;
-    padding: 1rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    background: white;
-}
-
-.mode-option:hover {
-    border-color: #06b6d4;
-    transform: translateY(-2px);
-}
-
-.mode-option.active {
-    border-color: #06b6d4;
-    background: #f0f9ff;
-}
-
-.mode-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.mode-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.125rem;
-}
-
-.mode-icon.closed {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.mode-icon.open24 {
-    background: #dcfce7;
-    color: #16a34a;
-}
-
-.mode-icon.split {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.mode-icon.fullday {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.time-inputs {
-    background: white;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    border: 1px solid #e9ecef;
-}
-
-.time-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.time-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.time-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #374151;
-}
-
-.time-input {
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.time-input:focus {
-    outline: none;
-    border-color: #06b6d4;
-    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-}
-
-.save-section {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 2rem;
-    border-radius: 1rem;
-    text-align: center;
-    margin-top: 2rem;
-}
-
-.btn-save {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 0.75rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-save:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
-}
-
-.save-hint {
-    color: #6c757d;
-    margin: 1rem 0 0 0;
-    font-size: 0.875rem;
-}
-
-.sidebar-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    margin-bottom: 2rem;
-    overflow: hidden;
-}
-
-.sidebar-card-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 1.5rem;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.sidebar-card-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-}
-
-.sidebar-card-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #172b4d;
-    margin-bottom: 0.5rem;
-}
-
-.sidebar-card-subtitle {
-    color: #6c757d;
-    margin: 0;
-}
-
-.sidebar-card-body {
-    padding: 1.5rem;
-}
-
-.holiday-item, .vacation-item {
-    background: #f8f9fa;
-    border-radius: 0.75rem;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid #e9ecef;
-}
-
-.holiday-input, .date-input, .note-input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    transition: all 0.3s ease;
-}
-
-.holiday-input:focus, .date-input:focus, .note-input:focus {
-    outline: none;
-    border-color: #06b6d4;
-    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-}
-
-.holiday-remove, .vacation-remove {
-    background: #fee2e2;
-    color: #dc2626;
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 0.5rem;
-}
-
-.holiday-remove:hover, .vacation-remove:hover {
-    background: #fecaca;
-    transform: scale(1.05);
-}
-
-.btn-add-holiday, .btn-add-vacation {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-}
-
-.btn-add-holiday:hover, .btn-add-vacation:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(6, 182, 212, 0.3);
-}
-
-.vacation-dates {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.date-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.date-label, .note-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #374151;
-}
-
-.info-card {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    border: 1px solid #e9ecef;
-}
-
-.info-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: #6c757d;
-    margin-bottom: 1rem;
-}
-
-.info-item:last-child {
-    margin-bottom: 0;
-}
-
-.success-alert {
-    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-    border: 1px solid #16a34a;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.alert-content {
-    color: #166534;
-    font-weight: 600;
-}
-
-.alert-close {
-    background: none;
-    border: none;
-    color: #16a34a;
-    cursor: pointer;
-    font-size: 1.125rem;
-}
-
-@media (max-width: 768px) {
-    .schedule-container {
-        padding: 1rem;
-    }
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; min-height: 100vh;">
+  
+  <!-- Header -->
+  <div style="text-align: center; margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h1 style="font-size: 28px; color: #333; margin: 0 0 10px 0;">Weekly Schedule Management</h1>
+    <p style="color: #666; margin: 0;">Set your working hours, holidays, and vacation periods</p>
+  </div>
+
+  <!-- Message Container -->
+  <div id="message-container" style="margin-bottom: 20px;"></div>
+
+  <!-- Main Content -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
     
-    .header-title {
-        font-size: 2rem;
-    }
-    
-    .mode-options {
-        grid-template-columns: 1fr;
-    }
-    
-    .time-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .vacation-dates {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-
-<div class="schedule-container">
-    <!-- Header Section -->
-    <div class="schedule-header">
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <div class="header-badge">
-                    <i class="fas fa-clock me-2"></i>
-                    <span>Weekly Schedule</span>
-                </div>
-                <h1 class="header-title">Manage Your Availability</h1>
-                <p class="header-subtitle">Set your working hours, holidays, and vacation periods to help clients know when you're available.</p>
-            </div>
-            <div class="col-lg-4 text-lg-end">
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-light btn-lg" id="exportJson">
-                        <i class="fas fa-download me-2"></i>Export
-                    </button>
-                    <button class="btn btn-outline-light btn-lg" id="resetDefaults">
-                        <i class="fas fa-undo me-2"></i>Reset
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @if(session('success'))
-        <div class="success-alert">
-            <div class="alert-content">
-                <i class="fas fa-check-circle me-2"></i>
-                {{ session('success') }}
-            </div>
-            <button type="button" class="alert-close" data-bs-dismiss="alert">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    @endif
+    <!-- Working Hours Section -->
+    <div style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <h2 style="font-size: 20px; color: #333; margin: 0 0 20px 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">Working Hours</h2>
 
     <form id="scheduleForm">
         @csrf
-        <div class="row">
-            <!-- Main Schedule -->
-            <div class="col-lg-8">
-                <div class="schedule-card">
-                    <div class="card-header-section">
-                        <div class="card-header-icon">
-                            <i class="fas fa-calendar-week"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-header-title">Weekly Schedule</h3>
-                            <p class="card-header-subtitle">Set your availability for each day of the week</p>
-                        </div>
-                    </div>
-                    
-                    <div class="card-body-section">
+        
                         @php
                             $days = ['monday' => 'Monday', 'tuesday' => 'Tuesday', 'wednesday' => 'Wednesday', 
                                     'thursday' => 'Thursday', 'friday' => 'Friday', 'saturday' => 'Saturday', 'sunday' => 'Sunday'];
@@ -598,544 +77,294 @@
                                 $full = $day['full'] ?? ['o' => '09:00', 'c' => '19:00'];
                             @endphp
                             
-                            <div class="day-schedule-card" data-day="{{ $key }}">
-                                <div class="day-header">
-                                    <div class="day-info">
-                                        <div class="day-icon">
-                                            <i class="fas fa-sun"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="day-title">{{ $label }}</h4>
-                                            <span class="day-subtitle">24-hour format</span>
-                                        </div>
-                                    </div>
-                                    <div class="day-status {{ $mode }}">
-                                        @if($mode === 'closed')
-                                            <span class="status-badge closed">
-                                                <i class="fas fa-times-circle me-1"></i>Closed
-                                            </span>
-                                        @elseif($mode === 'open24')
-                                            <span class="status-badge open24">
-                                                <i class="fas fa-clock me-1"></i>24h Open
-                                            </span>
-                                        @elseif($mode === 'split')
-                                            <span class="status-badge split">
-                                                <i class="fas fa-clock me-1"></i>Split Hours
-                                            </span>
-                                        @else
-                                            <span class="status-badge fullday">
-                                                <i class="fas fa-clock me-1"></i>Full Day
-                                            </span>
-                                        @endif
+          <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9;" data-day="{{ $key }}">
+            <div style="font-weight: bold; color: #333; margin-bottom: 10px; font-size: 16px;">{{ $label }}</div>
+            
+            <!-- Mode Buttons -->
+            <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+              <button type="button" class="mode-btn {{ $mode === 'closed' ? 'active' : '' }}" data-mode="closed" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'closed' ? '#007bff' : 'white' }}; color: {{ $mode === 'closed' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Closed</button>
+              <button type="button" class="mode-btn {{ $mode === 'open24' ? 'active' : '' }}" data-mode="open24" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'open24' ? '#007bff' : 'white' }}; color: {{ $mode === 'open24' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">24 Hours</button>
+              <button type="button" class="mode-btn {{ $mode === 'split' ? 'active' : '' }}" data-mode="split" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'split' ? '#007bff' : 'white' }}; color: {{ $mode === 'split' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Split Hours</button>
+              <button type="button" class="mode-btn {{ $mode === 'fullday' ? 'active' : '' }}" data-mode="fullday" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'fullday' ? '#007bff' : 'white' }}; color: {{ $mode === 'fullday' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Full Day</button>
+                                </div>
+
+            <input type="hidden" name="schedule_data[{{ $key }}][mode]" value="{{ $mode }}">
+            
+            <!-- Split Hours -->
+            <div class="split-inputs" style="display: {{ $mode === 'split' ? 'grid' : 'none' }}; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px;">
+              <div>
+                <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Open 1</label>
+                <input type="time" name="schedule_data[{{ $key }}][split][o1]" value="{{ $split['o1'] }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                                                </div>
+              <div>
+                <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Close 1</label>
+                <input type="time" name="schedule_data[{{ $key }}][split][c1]" value="{{ $split['c1'] }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                                            </div>
+              <div>
+                <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Open 2</label>
+                <input type="time" name="schedule_data[{{ $key }}][split][o2]" value="{{ $split['o2'] }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                                                </div>
+              <div>
+                <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Close 2</label>
+                <input type="time" name="schedule_data[{{ $key }}][split][c2]" value="{{ $split['c2'] }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
                                     </div>
                                 </div>
 
-                                <!-- Mode Selection -->
-                                <div class="mode-selector">
-                                    <div class="mode-options">
-                                        <label class="mode-option {{ $mode === 'closed' ? 'active' : '' }}">
-                                            <input type="radio" name="schedule_data[{{ $key }}][mode]" value="closed" {{ $mode === 'closed' ? 'checked' : '' }} style="display: none;">
-                                            <div class="mode-content">
-                                                <div class="mode-icon closed">
-                                                    <i class="fas fa-times"></i>
-                                                </div>
-                                                <span>Closed</span>
-                                            </div>
-                                        </label>
-                                        
-                                        <label class="mode-option {{ $mode === 'open24' ? 'active' : '' }}">
-                                            <input type="radio" name="schedule_data[{{ $key }}][mode]" value="open24" {{ $mode === 'open24' ? 'checked' : '' }} style="display: none;">
-                                            <div class="mode-content">
-                                                <div class="mode-icon open24">
-                                                    <i class="fas fa-infinity"></i>
-                                                </div>
-                                                <span>24h Open</span>
-                                            </div>
-                                        </label>
-                                        
-                                        <label class="mode-option {{ $mode === 'split' ? 'active' : '' }}">
-                                            <input type="radio" name="schedule_data[{{ $key }}][mode]" value="split" {{ $mode === 'split' ? 'checked' : '' }} style="display: none;">
-                                            <div class="mode-content">
-                                                <div class="mode-icon split">
-                                                    <i class="fas fa-clock"></i>
-                                                </div>
-                                                <span>Split Hours</span>
-                                            </div>
-                                        </label>
-                                        
-                                        <label class="mode-option {{ $mode === 'fullday' ? 'active' : '' }}">
-                                            <input type="radio" name="schedule_data[{{ $key }}][mode]" value="fullday" {{ $mode === 'fullday' ? 'checked' : '' }} style="display: none;">
-                                            <div class="mode-content">
-                                                <div class="mode-icon fullday">
-                                                    <i class="fas fa-sun"></i>
-                                                </div>
-                                                <span>Full Day</span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <!-- Split Schedule Row -->
-                                <div class="time-inputs split-row" style="display: {{ $mode === 'split' ? 'block' : 'none' }}">
-                                    <div class="time-grid">
-                                        <div class="time-input-group">
-                                            <label class="time-label">Morning Start</label>
-                                            <input type="time" class="time-input" step="300" 
-                                                   name="schedule_data[{{ $key }}][split][o1]" 
-                                                   value="{{ $split['o1'] }}">
+            <!-- Full Day -->
+            <div class="full-inputs" style="display: {{ $mode === 'fullday' ? 'grid' : 'none' }}; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px;">
+              <div>
+                <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Open</label>
+                <input type="time" name="schedule_data[{{ $key }}][full][o]" value="{{ $full['o'] }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
                                         </div>
-                                        <div class="time-input-group">
-                                            <label class="time-label">Morning End</label>
-                                            <input type="time" class="time-input" step="300" 
-                                                   name="schedule_data[{{ $key }}][split][c1]" 
-                                                   value="{{ $split['c1'] }}">
-                                        </div>
-                                        <div class="time-input-group">
-                                            <label class="time-label">Afternoon Start</label>
-                                            <input type="time" class="time-input" step="300" 
-                                                   name="schedule_data[{{ $key }}][split][o2]" 
-                                                   value="{{ $split['o2'] }}">
-                                        </div>
-                                        <div class="time-input-group">
-                                            <label class="time-label">Afternoon End</label>
-                                            <input type="time" class="time-input" step="300" 
-                                                   name="schedule_data[{{ $key }}][split][c2]" 
-                                                   value="{{ $split['c2'] }}">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Full Day Row -->
-                                <div class="time-inputs full-row" style="display: {{ $mode === 'fullday' ? 'block' : 'none' }}">
-                                    <div class="time-grid">
-                                        <div class="time-input-group">
-                                            <label class="time-label">Start Time</label>
-                                            <input type="time" class="time-input" step="300" 
-                                                   name="schedule_data[{{ $key }}][full][o]" 
-                                                   value="{{ $full['o'] }}">
-                                        </div>
-                                        <div class="time-input-group">
-                                            <label class="time-label">End Time</label>
-                                            <input type="time" class="time-input" step="300" 
-                                                   name="schedule_data[{{ $key }}][full][c]" 
-                                                   value="{{ $full['c'] }}">
-                                        </div>
+              <div>
+                <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Close</label>
+                <input type="time" name="schedule_data[{{ $key }}][full][c]" value="{{ $full['c'] }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
                                     </div>
                                 </div>
                             </div>
                         @endforeach
-
-                        <div class="save-section">
-                            <button type="submit" class="btn-save">
-                                <i class="fas fa-save me-2"></i>Save Schedule
-                            </button>
-                            <p class="save-hint">
-                                "Split Hours" = Morning (09:00–12:00) and Afternoon (13:30–19:00). 
-                                "Full Day" = Single time slot (09:00–19:00). All times are 24-hour format.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+      </form>
             </div>
 
             <!-- Sidebar -->
-            <div class="col-lg-4">
-                <!-- Holidays Card -->
-                <div class="sidebar-card">
-                    <div class="sidebar-card-header">
-                        <div class="sidebar-card-icon">
-                            <i class="fas fa-calendar-times"></i>
-                        </div>
-                        <div>
-                            <h4 class="sidebar-card-title">Holidays</h4>
-                            <p class="sidebar-card-subtitle">Mark specific dates as unavailable</p>
-                        </div>
-                    </div>
-                    
-                    <div class="sidebar-card-body">
-                        <div class="holiday-list" id="holidayList">
+    <div style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      
+      <!-- Holidays -->
+      <div style="margin-bottom: 30px;">
+        <h3 style="font-size: 18px; color: #333; margin: 0 0 15px 0;">Holidays</h3>
+        <div id="holidays-list">
                             @if(!empty($schedule->holidays))
                                 @foreach($schedule->holidays as $holiday)
-                                    <div class="holiday-item">
-                                        <input type="date" class="holiday-input" name="holidays[]" value="{{ $holiday }}">
-                                        <button type="button" class="holiday-remove" title="Remove holiday">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; padding: 8px; background: #f9f9f9; border-radius: 4px;">
+                <input type="date" name="holidays[]" value="{{ $holiday }}" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button type="button" onclick="removeHoliday(this)" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
                                     </div>
                                 @endforeach
                             @else
-                                <div class="holiday-item">
-                                    <input type="date" class="holiday-input" name="holidays[]" value="">
-                                    <button type="button" class="holiday-remove" title="Remove holiday">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; padding: 8px; background: #f9f9f9; border-radius: 4px;">
+              <input type="date" name="holidays[]" value="" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <button type="button" onclick="removeHoliday(this)" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
                                 </div>
                             @endif
                         </div>
-                        <button type="button" class="btn-add-holiday" id="addHoliday">
-                            <i class="fas fa-plus me-2"></i>Add Holiday
-                        </button>
-                    </div>
+        <button type="button" onclick="addHoliday()" style="background: #28a745; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; margin-top: 10px;">+ Add Holiday</button>
                 </div>
 
-                <!-- Vacations Card -->
-                <div class="sidebar-card">
-                    <div class="sidebar-card-header">
-                        <div class="sidebar-card-icon">
-                            <i class="fas fa-umbrella-beach"></i>
-                        </div>
+      <!-- Vacations -->
                         <div>
-                            <h4 class="sidebar-card-title">Vacations</h4>
-                            <p class="sidebar-card-subtitle">Set date ranges for time off</p>
-                        </div>
-                    </div>
-                    
-                    <div class="sidebar-card-body">
-                        <div class="vacation-list" id="vacList">
+        <h3 style="font-size: 18px; color: #333; margin: 0 0 15px 0;">Vacations</h3>
+        <div id="vacations-list">
                             @if(!empty($schedule->vacations))
                                 @foreach($schedule->vacations as $vacation)
-                                    <div class="vacation-item">
-                                        <div class="vacation-dates">
-                                            <div class="date-input-group">
-                                                <label class="date-label">From</label>
-                                                <input type="date" class="date-input" name="vacations[{{ $loop->index }}][from]" value="{{ $vacation['from'] }}">
+              <div style="margin-bottom: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                  <input type="date" name="vacations[{{ $loop->index }}][from]" value="{{ $vacation['from'] }}" placeholder="From" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                  <input type="date" name="vacations[{{ $loop->index }}][to]" value="{{ $vacation['to'] }}" placeholder="To" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                                             </div>
-                                            <div class="date-input-group">
-                                                <label class="date-label">To</label>
-                                                <input type="date" class="date-input" name="vacations[{{ $loop->index }}][to]" value="{{ $vacation['to'] }}">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input type="text" name="vacations[{{ $loop->index }}][note]" value="{{ $vacation['note'] ?? '' }}" placeholder="Note" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                  <button type="button" onclick="removeVacation(this)" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
                                             </div>
-                                        </div>
-                                        <div class="vacation-note">
-                                            <label class="note-label">Note (optional)</label>
-                                            <input type="text" class="note-input" name="vacations[{{ $loop->index }}][note]" value="{{ $vacation['note'] ?? '' }}" placeholder="Vacation note">
-                                        </div>
-                                        <button type="button" class="vacation-remove" title="Remove vacation">
-                                            <i class="fas fa-times"></i>
-                                        </button>
                                     </div>
                                 @endforeach
                             @else
-                                <div class="vacation-item">
-                                    <div class="vacation-dates">
-                                        <div class="date-input-group">
-                                            <label class="date-label">From</label>
-                                            <input type="date" class="date-input" name="vacations[0][from]" value="">
+            <div style="margin-bottom: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="date" name="vacations[0][from]" value="" placeholder="From" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <input type="date" name="vacations[0][to]" value="" placeholder="To" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                                         </div>
-                                        <div class="date-input-group">
-                                            <label class="date-label">To</label>
-                                            <input type="date" class="date-input" name="vacations[0][to]" value="">
-                                        </div>
-                                    </div>
-                                    <div class="vacation-note">
-                                        <label class="note-label">Note (optional)</label>
-                                        <input type="text" class="note-input" name="vacations[0][note]" value="" placeholder="Vacation note">
-                                    </div>
-                                    <button type="button" class="vacation-remove" title="Remove vacation">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            @endif
-                        </div>
-                        <button type="button" class="btn-add-vacation" id="addVac">
-                            <i class="fas fa-plus me-2"></i>Add Vacation
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Info Card -->
-                <div class="info-card">
-                    <div class="info-item">
-                        <i class="fas fa-globe me-2"></i>
-                        <span><strong>Timezone:</strong> {{ $schedule->timezone ?? 'Europe/Brussels' }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-clock me-2"></i>
-                        <span><strong>Last updated:</strong> {{ $schedule->last_updated ? $schedule->last_updated->format('Y-m-d H:i') : 'Never' }}</span>
-                    </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" name="vacations[0][note]" value="" placeholder="Note" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button type="button" onclick="removeVacation(this)" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
                 </div>
             </div>
+          @endif
         </div>
-    </form>
-</div>
-
-<!-- Confirm Delete Modal -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete item?</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this item?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">Yes, delete</button>
+        <button type="button" onclick="addVacation()" style="background: #28a745; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; width: 100%; margin-top: 10px;">+ Add Vacation</button>
             </div>
         </div>
     </div>
+
+  <!-- Save Section -->
+  <div style="text-align: center; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <button type="button" onclick="saveSchedule()" style="background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;">Save Schedule</button>
+    <p style="margin-top: 10px; color: #666; font-size: 14px;">
+      Last updated: {{ $schedule->last_updated ? $schedule->last_updated->format('Y-m-d H:i') : 'Never' }}
+    </p>
+  </div>
+
 </div>
 
-@endsection
-
-@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    let vacationIndex = {{ !empty($schedule->vacations) ? count($schedule->vacations) : 1 }};
-    let pendingDelete = null;
-
-    // Mode behavior + show/hide time inputs
-    function applyMode(card) {
-        const selected = card.querySelector('input[type="radio"]:checked')?.value || 'closed';
-        const splitRow = card.querySelector('.split-row');
-        const fullRow = card.querySelector('.full-row');
-
-        // Hide all rows first
-        splitRow.style.display = 'none';
-        fullRow.style.display = 'none';
-
-        if (selected === 'closed') {
-            // No rows shown for closed
-        } else if (selected === 'open24') {
-            // No rows shown for 24h
-        } else if (selected === 'split') {
-            splitRow.style.display = 'block';
-        } else if (selected === 'fullday') {
-            fullRow.style.display = 'block';
-        }
-    }
-
-    // Apply mode to all day cards
-    document.querySelectorAll('.day-schedule-card').forEach(card => {
-        applyMode(card);
-        card.addEventListener('change', ev => {
-            if (ev.target.name.startsWith('schedule_data') && ev.target.name.includes('[mode]')) {
-                applyMode(card);
+// Mode button functionality
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const daySchedule = this.closest('[data-day]');
+    const day = daySchedule.dataset.day;
+    const mode = this.dataset.mode;
+    
+    // Update active button
+    daySchedule.querySelectorAll('.mode-btn').forEach(b => {
+      b.style.background = 'white';
+      b.style.color = '#333';
+    });
+    this.style.background = '#007bff';
+    this.style.color = 'white';
+    
+    // Update hidden input
+    daySchedule.querySelector('input[name*="[mode]"]').value = mode;
+    
+    // Show/hide time inputs
+    const splitInputs = daySchedule.querySelector('.split-inputs');
+    const fullInputs = daySchedule.querySelector('.full-inputs');
+    
+    splitInputs.style.display = 'none';
+    fullInputs.style.display = 'none';
+    
+    if (mode === 'split') {
+      splitInputs.style.display = 'grid';
+    } else if (mode === 'fullday') {
+      fullInputs.style.display = 'grid';
             }
         });
     });
 
-    // Add holiday
-    document.getElementById('addHoliday').addEventListener('click', () => {
-        const row = document.createElement('div');
-        row.className = 'holiday-item';
-        row.innerHTML = `
-            <input type="date" class="holiday-input" name="holidays[]" value="">
-            <button type="button" class="holiday-remove" title="Remove holiday">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        document.getElementById('holidayList').appendChild(row);
-    });
+// Holiday management
+function addHoliday() {
+  const container = document.getElementById('holidays-list');
+  const div = document.createElement('div');
+  div.style.cssText = 'display: flex; gap: 8px; align-items: center; margin-bottom: 8px; padding: 8px; background: #f9f9f9; border-radius: 4px;';
+  div.innerHTML = `
+    <input type="date" name="holidays[]" value="" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    <button type="button" onclick="removeHoliday(this)" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+  `;
+  container.appendChild(div);
+}
 
-    // Add vacation
-    document.getElementById('addVac').addEventListener('click', () => {
-        const item = document.createElement('div');
-        item.className = 'vacation-item';
-        item.innerHTML = `
-            <div class="vacation-dates">
-                <div class="date-input-group">
-                    <label class="date-label">From</label>
-                    <input type="date" class="date-input" name="vacations[${vacationIndex}][from]" value="">
+function removeHoliday(btn) {
+  btn.closest('div').remove();
+}
+
+// Vacation management
+function addVacation() {
+  const container = document.getElementById('vacations-list');
+  const index = container.children.length;
+  const div = document.createElement('div');
+  div.style.cssText = 'margin-bottom: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;';
+  div.innerHTML = `
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+      <input type="date" name="vacations[${index}][from]" value="" placeholder="From" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      <input type="date" name="vacations[${index}][to]" value="" placeholder="To" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
-                <div class="date-input-group">
-                    <label class="date-label">To</label>
-                    <input type="date" class="date-input" name="vacations[${vacationIndex}][to]" value="">
-                </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <input type="text" name="vacations[${index}][note]" value="" placeholder="Note" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      <button type="button" onclick="removeVacation(this)" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
             </div>
-            <div class="vacation-note">
-                <label class="note-label">Note (optional)</label>
-                <input type="text" class="note-input" name="vacations[${vacationIndex}][note]" value="" placeholder="Vacation note">
-            </div>
-            <button type="button" class="vacation-remove" title="Remove vacation">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        document.getElementById('vacList').appendChild(item);
-        vacationIndex++;
-    });
+  `;
+  container.appendChild(div);
+}
 
-    // Remove holiday/vacation
-    document.addEventListener('click', e => {
-        if (e.target.classList.contains('holiday-remove') || e.target.closest('.holiday-remove')) {
-            const target = e.target.classList.contains('holiday-remove') ? e.target : e.target.closest('.holiday-remove');
-            pendingDelete = target.closest('.holiday-item');
-            new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show();
-        }
-        if (e.target.classList.contains('vacation-remove') || e.target.closest('.vacation-remove')) {
-            const target = e.target.classList.contains('vacation-remove') ? e.target : e.target.closest('.vacation-remove');
-            pendingDelete = target.closest('.vacation-item');
-            new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show();
-        }
-    });
+function removeVacation(btn) {
+  btn.closest('div').remove();
+}
 
-    // Confirm delete
-    document.getElementById('confirmDelete').addEventListener('click', () => {
-        if (pendingDelete) {
-            pendingDelete.remove();
-            pendingDelete = null;
-        }
-        bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')).hide();
-    });
-
-    // Form submission
-    document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(e.target);
-        const data = {};
-        
-        // Convert FormData to structured object
-        for (let [key, value] of formData.entries()) {
-            if (key.includes('[')) {
-                const parts = key.match(/(\w+)\[([^\]]+)\](?:\[([^\]]+)\])?/);
-                if (parts) {
-                    const [, main, sub, subsub] = parts;
-                    if (!data[main]) data[main] = {};
-                    if (subsub) {
-                        if (!data[main][sub]) data[main][sub] = {};
-                        data[main][sub][subsub] = value;
-                    } else {
-                        data[main][sub] = value;
-                    }
-                }
-            } else {
-                data[key] = value;
-            }
-        }
-
-        try {
-            const response = await fetch('{{ route("plumber.schedule.update") }}', {
+// Save schedule
+function saveSchedule() {
+  // Collect holidays
+  const holidays = [];
+  document.querySelectorAll('#holidays-list input[type="date"]').forEach(input => {
+    if (input.value) holidays.push(input.value);
+  });
+  
+  // Collect vacations
+  const vacations = [];
+  document.querySelectorAll('#vacations-list > div').forEach(item => {
+    const from = item.querySelector('input[placeholder="From"]').value;
+    const to = item.querySelector('input[placeholder="To"]').value;
+    const note = item.querySelector('input[placeholder="Note"]').value;
+    
+    if (from && to) {
+      vacations.push({ from, to, note });
+    }
+  });
+  
+  // Prepare data
+  const data = {
+    _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+    schedule_data: {},
+    holidays: holidays,
+    vacations: vacations
+  };
+  
+  // Collect schedule data
+  document.querySelectorAll('[data-day]').forEach(daySchedule => {
+    const day = daySchedule.dataset.day;
+    const mode = daySchedule.querySelector('input[name*="[mode]"]').value;
+    
+    data.schedule_data[day] = { mode: mode };
+    
+    if (mode === 'split') {
+      data.schedule_data[day].split = {
+        o1: daySchedule.querySelector('input[name*="[split][o1]"]').value,
+        c1: daySchedule.querySelector('input[name*="[split][c1]"]').value,
+        o2: daySchedule.querySelector('input[name*="[split][o2]"]').value,
+        c2: daySchedule.querySelector('input[name*="[split][c2]"]').value
+      };
+    } else if (mode === 'fullday') {
+      data.schedule_data[day].full = {
+        o: daySchedule.querySelector('input[name*="[full][o]"]').value,
+        c: daySchedule.querySelector('input[name*="[full][c]"]').value
+      };
+    }
+  });
+  
+  // Show loading
+  const saveBtn = document.querySelector('button[onclick="saveSchedule()"]');
+  const originalText = saveBtn.textContent;
+  saveBtn.textContent = 'Saving...';
+  saveBtn.disabled = true;
+  
+  // Send request
+  fetch('{{ route("plumber.schedule.update") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      'X-CSRF-TOKEN': data._token,
+      'Accept': 'application/json'
                 },
                 body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-            
+  })
+  .then(response => response.json())
+  .then(result => {
             if (result.success) {
-                // Show success message
-                const alert = document.createElement('div');
-                alert.className = 'success-alert';
-                alert.innerHTML = `
-                    <div class="alert-content">
-                        <i class="fas fa-check-circle me-2"></i>
-                        ${result.message}
-                    </div>
-                    <button type="button" class="alert-close" onclick="this.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                document.querySelector('.schedule-container').insertBefore(alert, document.querySelector('.schedule-header').nextSibling);
-                
-                // Auto-hide after 3 seconds
-                setTimeout(() => alert.remove(), 3000);
+      showMessage('Schedule saved successfully!', 'success');
             } else {
-                throw new Error(result.message || 'Failed to update schedule');
+      showMessage('Error saving schedule: ' + (result.message || 'Unknown error'), 'error');
             }
-        } catch (error) {
+  })
+  .catch(error => {
             console.error('Error:', error);
-            alert('Error updating schedule: ' + error.message);
-        }
-    });
+    showMessage('Error saving schedule: ' + error.message, 'error');
+  })
+  .finally(() => {
+    saveBtn.textContent = originalText;
+    saveBtn.disabled = false;
+  });
+}
 
-    // Reset defaults
-    document.getElementById('resetDefaults').addEventListener('click', () => {
-        if (!confirm('Reset all days to defaults and clear holidays/vacations?')) return;
-        
-        document.querySelectorAll('.day-schedule-card').forEach(card => {
-            card.querySelector('input[value="split"]').checked = true;
-            card.querySelectorAll('input[type="time"]').forEach(inp => {
-                if (/\[o1\]/.test(inp.name)) inp.value = '09:00';
-                if (/\[c1\]/.test(inp.name)) inp.value = '12:00';
-                if (/\[o2\]/.test(inp.name)) inp.value = '13:30';
-                if (/\[c2\]/.test(inp.name)) inp.value = '19:00';
-                if (/\[o\](?!1|2)/.test(inp.name)) inp.value = '09:00';
-                if (/\[c\](?!1|2)/.test(inp.name)) inp.value = '19:00';
-            });
-            applyMode(card);
-        });
-        
-        // Clear holidays and vacations
-        document.getElementById('holidayList').innerHTML = `
-            <div class="holiday-item">
-                <input type="date" class="holiday-input" name="holidays[]" value="">
-                <button type="button" class="holiday-remove" title="Remove holiday">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        document.getElementById('vacList').innerHTML = `
-            <div class="vacation-item">
-                <div class="vacation-dates">
-                    <div class="date-input-group">
-                        <label class="date-label">From</label>
-                        <input type="date" class="date-input" name="vacations[0][from]" value="">
-                    </div>
-                    <div class="date-input-group">
-                        <label class="date-label">To</label>
-                        <input type="date" class="date-input" name="vacations[0][to]" value="">
-                    </div>
-                </div>
-                <div class="vacation-note">
-                    <label class="note-label">Note (optional)</label>
-                    <input type="text" class="note-input" name="vacations[0][note]" value="" placeholder="Vacation note">
-                </div>
-                <button type="button" class="vacation-remove" title="Remove vacation">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        vacationIndex = 1;
-    });
-
-    // Export JSON
-    document.getElementById('exportJson').addEventListener('click', () => {
-        const form = document.getElementById('scheduleForm');
-        const formData = new FormData(form);
-        const data = {};
-        
-        // Convert FormData to structured object
-        for (let [key, value] of formData.entries()) {
-            if (key.includes('[')) {
-                const parts = key.match(/(\w+)\[([^\]]+)\](?:\[([^\]]+)\])?/);
-                if (parts) {
-                    const [, main, sub, subsub] = parts;
-                    if (!data[main]) data[main] = {};
-                    if (subsub) {
-                        if (!data[main][sub]) data[main][sub] = {};
-                        data[main][sub][subsub] = value;
-                    } else {
-                        data[main][sub] = value;
-                    }
-                }
-            } else {
-                data[key] = value;
-            }
-        }
-        
-        // Add metadata
-        data.timezone = '{{ $schedule->timezone ?? "Europe/Brussels" }}';
-        data.exported_at = new Date().toISOString();
-        
-        // Create and download file
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'plumber-schedule.json';
-        document.body.appendChild(a);
-        a.click();
+// Show message
+function showMessage(message, type) {
+  const container = document.getElementById('message-container');
+  const bgColor = type === 'success' ? '#d4edda' : '#f8d7da';
+  const textColor = type === 'success' ? '#155724' : '#721c24';
+  const borderColor = type === 'success' ? '#c3e6cb' : '#f5c6cb';
+  
+  container.innerHTML = `<div style="padding: 12px; border-radius: 4px; background: ${bgColor}; color: ${textColor}; border: 1px solid ${borderColor}; text-align: center;">${message}</div>`;
+  
         setTimeout(() => {
-            URL.revokeObjectURL(a.href);
-            a.remove();
-        }, 0);
-    });
-});
+    container.innerHTML = '';
+  }, 5000);
+}
 </script>
-@endpush
+
+@endsection

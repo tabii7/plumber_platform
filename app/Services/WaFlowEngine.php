@@ -84,6 +84,60 @@ class WaFlowEngine
             $ctxKey = $node->code; // store by node code
             $ctx['collected'][$ctxKey] = $incomingText;
             $session->context_json = $ctx;
+            
+            // Special handling for description collection - ask for image upload
+            if ($ctxKey === 'description' && $session->flow_code === 'client_flow') {
+                // Check if we have all required fields
+                if (isset($ctx['collected']['problem']) && isset($ctx['collected']['urgency']) && isset($ctx['collected']['description'])) {
+                    // Ask user if they want to add an image
+                    $imageQuestion = "📸 Would you like to add a picture of your problem?\n\n";
+                    $imageQuestion .= "Adding a photo can help plumbers better understand your situation and provide more accurate quotes.\n\n";
+                    $imageQuestion .= "1) Yes, I'll upload a picture\n";
+                    $imageQuestion .= "2) No, continue without picture\n\n";
+                    $imageQuestion .= "Reply with 1 or 2 to choose.";
+                    
+                    // Set session to image upload question state
+                    $session->node_code = 'C3';
+                    $session->save();
+                    
+                    return $imageQuestion;
+                }
+            }
+        }
+        
+        // If node is buttons/list, also collect the selection
+        if (in_array($node->type, ['buttons', 'list'])) {
+            $ctx = $session->context_json ?? [];
+            $ctxKey = $node->code; // store by node code
+            
+            // Get the selected option value
+            $options = $node->options_json ?? [];
+            $selectedValue = null;
+            
+            if (ctype_digit($incomingText)) {
+                $idx = (int)$incomingText - 1;
+                if (isset($options[$idx])) {
+                    $opt = $options[$idx];
+                    $selectedValue = $opt['id'] ?? $opt['label'] ?? $opt['text'] ?? $incomingText;
+                }
+            } else {
+                // Try to match by text
+                foreach ($options as $opt) {
+                    $id = strtolower((string)($opt['id'] ?? ''));
+                    $label = strtolower((string)($opt['label'] ?? ''));
+                    $text = strtolower((string)($opt['text'] ?? ''));
+                    if (in_array(strtolower($incomingText), [$id, $label, $text])) {
+                        $selectedValue = $opt['id'] ?? $opt['label'] ?? $opt['text'] ?? $incomingText;
+                        break;
+                    }
+                }
+            }
+            
+            if ($selectedValue) {
+                $ctx['collected'][$ctxKey] = $selectedValue;
+                $session->context_json = $ctx;
+                $session->save();
+            }
         }
 
         if (!$nextCode) {

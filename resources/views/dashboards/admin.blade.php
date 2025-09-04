@@ -6,44 +6,44 @@
 
 @section('sidebar-nav')
     <div class="nav-item">
-        <a href="{{ route('admin.dashboard') }}" class="nav-link active">
+        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('admin.whatsapp') }}" class="nav-link">
+        <a href="{{ route('admin.whatsapp') }}" class="nav-link {{ request()->routeIs('admin.whatsapp*') ? 'active' : '' }}">
             <i class="fab fa-whatsapp"></i>
             <span>WhatsApp</span>
         </a>
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('admin.flows.index') }}" class="nav-link">
+        <a href="{{ route('admin.flows.index') }}" class="nav-link {{ request()->routeIs('admin.flows.*') ? 'active' : '' }}">
             <i class="fas fa-project-diagram"></i>
             <span>WhatsApp Flows</span>
         </a>
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('plumbers.index') }}" class="nav-link">
+        <a href="{{ route('plumbers.index') }}" class="nav-link {{ request()->routeIs('plumbers.*') ? 'active' : '' }}">
             <i class="fas fa-user-tie"></i>
             <span>Plumbers</span>
         </a>
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('clients.index') }}" class="nav-link">
+        <a href="{{ route('clients.index') }}" class="nav-link {{ request()->routeIs('clients.*') ? 'active' : '' }}">
             <i class="fas fa-users"></i>
             <span>Clients</span>
         </a>
     </div>
     
     <div class="nav-item">
-        <a href="{{ route('admin.requests.index') }}" class="nav-link">
+        <a href="{{ route('requests.index') }}" class="nav-link {{ request()->routeIs('requests.*') ? 'active' : '' }}">
             <i class="fas fa-tools"></i>
-            <span>Service Requests</span>
+            <span>All Requests</span>
         </a>
     </div>
     
@@ -271,9 +271,9 @@
                             <i class="fas fa-users me-2"></i>
                             Manage Clients
                         </a>
-                        <a href="{{ route('admin.requests.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('requests.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-tools me-2"></i>
-                            Service Requests
+                            All Requests
                         </a>
                     </div>
                 </div>

@@ -6,11 +6,19 @@
 
 @section('sidebar-nav')
     <div class="nav-item">
-        <a href="{{ route('dashboard') }}" class="nav-link active">
+        <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
     </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('requests.index') }}" class="nav-link {{ request()->routeIs('requests.*') ? 'active' : '' }}">
+            <i class="fas fa-list"></i>
+            <span>My Requests</span>
+        </a>
+    </div>
+    
     
     <div class="nav-item">
         <a href="{{ route('welcome') }}#pricing" class="nav-link">

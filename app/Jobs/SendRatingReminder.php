@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Models\User;
 use App\Models\WaRequest;
-use App\Models\WaLog;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -24,43 +24,29 @@ class SendRatingReminder implements ShouldQueue
 
     public function handle(): void
     {
-        $request = WaRequest::find($this->requestId);
-        if (!$request) {
-            return;
-        }
+        $req = WaRequest::find($this->requestId);
+        if (!$req) return;
 
-        // If already rated, skip
-        if ($request->status === 'rated') {
-            return;
-        }
+        // Skip if already rated
+        $rated = \DB::table('ratings')->where('request_id', $req->id)->exists();
+        if ($rated) return;
 
-        $customer = User::find($request->customer_id);
-        if (!$customer) {
-            return;
-        }
+        $customer = User::find($req->customer_id);
+        if (!$customer || !$customer->whatsapp_number) return;
 
-        $msg = "⭐ Quick reminder to rate your plumber\n\n"
-             . "Job ID: {$request->id}\n"
-             . "Problem: {$request->problem}\n"
-             . "Description: \"{$request->description}\"\n\n"
-             . "Please reply with a number from 1 to 5 to rate your experience.\n"
-             . "You can also type 'rate' anytime.";
+        $msg  = "⭐ Rate Your Experience\n\n";
+        $msg .= "How was your experience with the plumber?\n";
+        $msg .= "Please reply with a number from 1 to 5.\n";
+        $msg .= "You can also type 'rate' to start the rating flow.";
 
         try {
             $botUrl = rtrim(config('services.wa_bot.url', 'http://127.0.0.1:3000'), '/');
-            \Http::post($botUrl . '/send-message', [
+            Http::post($botUrl . '/send-message', [
                 'number'  => $customer->whatsapp_number,
                 'message' => $msg,
             ])->throw();
         } catch (\Throwable $e) {
-            \Log::error('WA rating reminder failed', ['to' => $customer->whatsapp_number, 'error' => $e->getMessage()]);
-            // Fallback log record
-            WaLog::create([
-                'wa_number' => $customer->whatsapp_number,
-                'direction' => 'out',
-                'payload_json' => ['type' => 'text', 'body' => $msg, 'fallback' => 'rating_reminder_failed_send'],
-                'status' => 'queued'
-            ]);
+            \Log::error('Rating reminder send failed', ['request_id'=>$req->id,'error'=>$e->getMessage()]);
         }
     }
 }

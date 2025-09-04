@@ -11,7 +11,6 @@
         </div>
     @endif
 
-    <a href="{{ route('requests.create') }}" class="bg-blue-600 text-white px-3 py-2 rounded">New Request</a>
 
     <table class="min-w-full mt-4 bg-white border">
         <thead>

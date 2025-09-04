@@ -36,7 +36,8 @@ class User extends Authenticatable
     'btw_number',
     'werk_radius',
     'conversation_state',
-    'address_json'
+    'address_json',
+    'current_request_id'
 ];
 
     /**
@@ -79,5 +80,34 @@ public function categories()
         return $this->hasOne(Plumber::class);
     }
 
+    public function currentRequest()
+    {
+        return $this->belongsTo(WaRequest::class, 'current_request_id');
+    }
 
+    public function requests()
+    {
+        return $this->hasMany(WaRequest::class, 'customer_id');
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(WaOffer::class, 'plumber_id');
+    }
+
+    public function getAvailabilityStatusAttribute()
+    {
+        if ($this->role !== 'plumber') {
+            return null;
+        }
+        
+        return $this->plumber?->availability_status ?? 'available';
+    }
+
+    public function setAvailabilityStatusAttribute($value)
+    {
+        if ($this->role === 'plumber' && $this->plumber) {
+            $this->plumber->update(['availability_status' => $value]);
+        }
+    }
 }

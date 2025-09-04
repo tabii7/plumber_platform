@@ -1,4 +1,3 @@
-// whatsapp-bot/index.js
 require('dotenv').config();
 
 const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
@@ -9,17 +8,15 @@ const axios = require('axios');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
-// const LARAVEL_API = process.env.LARAVEL_API_URL || 'https://your-domain.com';
-LARAVEL_API = 'http://127.0.0.1:8000'
+const LARAVEL_API = process.env.LARAVEL_API_URL || 'http://127.0.0.1:8000';
 let sock;
 let qrCodeData = null;
 let isConnected = false;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 
-// tiny in-memory dedupe
 const seen = new Set();
 const SEEN_LIMIT = 500;
 
@@ -32,7 +29,6 @@ function remember(id) {
   if (seen.has(id)) return false;
   seen.add(id);
   if (seen.size > SEEN_LIMIT) {
-    // drop oldest-ish (cheap)
     const first = seen.values().next().value;
     seen.delete(first);
   }
@@ -46,11 +42,7 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
       auth: state,
       printQRInTerminal: false,
-      browser: [
-        process.env.BROWSER_NAME || 'LoodgieterApp',
-        process.env.BROWSER_VERSION || 'Chrome',
-        process.env.BROWSER_OS || '1.0.0'
-      ],
+      browser: [process.env.BROWSER_NAME || 'LoodgieterApp', process.env.BROWSER_VERSION || 'Chrome', process.env.BROWSER_OS || '1.0.0'],
       syncFullHistory: false,
       connectTimeoutMs: 30000,
       qrTimeout: 30000,
@@ -79,7 +71,6 @@ async function connectToWhatsApp() {
       if (connection === 'close') {
         isConnected = false;
         console.log('❌ Connection closed, reconnecting...', lastDisconnect?.error?.message || '');
-        
         if (reconnectAttempts < maxReconnectAttempts) {
           const delay = Math.pow(2, reconnectAttempts) * 1000;
           console.log(`🔄 Reconnect attempt ${reconnectAttempts + 1}/${maxReconnectAttempts} in ${delay}ms`);
@@ -93,18 +84,16 @@ async function connectToWhatsApp() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // ---- Incoming messages -> Laravel runtime ----
+    // Incoming -> Laravel
     sock.ev.on('messages.upsert', async (m) => {
       try {
         const msg = m?.messages?.[0];
         if (!msg || !msg.message || msg.key.fromMe) return;
 
         const id = msg.key.id;
-        if (!remember(id)) return; // de-dupe
+        if (!remember(id)) return;
 
         const from = msg.key.remoteJid;
-
-        // Extract user text or interactive selections
         const plain =
           msg.message.conversation ||
           msg.message.extendedTextMessage?.text ||
@@ -114,26 +103,19 @@ async function connectToWhatsApp() {
         const buttonId = msg.message?.buttonsResponseMessage?.selectedButtonId;
         const listRowId = msg.message?.listResponseMessage?.singleSelectReply?.selectedRowId;
 
-        // normalized input: prefer interactive ids, otherwise plain text
         const inputRaw = (buttonId || listRowId || plain || '').trim();
         if (!inputRaw) return;
 
-        const normalized = inputRaw.toLowerCase();
-
         console.log(`📩 From ${from} ->`, inputRaw);
 
-        // Send to Laravel runtime
         const res = await axios.post(`${LARAVEL_API}/api/wa/incoming`, {
           from: from.replace('@s.whatsapp.net', ''),
           message: inputRaw,
-          normalized: normalized
+          normalized: inputRaw.toLowerCase()
         }, { timeout: 20000 });
 
         const reply = res?.data?.reply;
-        console.log('📤 Laravel response:', JSON.stringify(reply, null, 2));
-        if (reply) {
-          await sendFromPayload(from, reply);
-        }
+        if (reply) await sendFromPayload(from, reply);
       } catch (err) {
         console.error('❌ incoming error', err?.response?.data || err.message || err);
       }
@@ -145,87 +127,46 @@ async function connectToWhatsApp() {
   }
 }
 
-/* ---------- Renderers ---------- */
-
-function isInteractivePayload(p) {
-  return p && (p.type === 'buttons' || p.type === 'list');
-}
+/* ---------- Outbound ---------- */
 
 async function sendButtons(jidTo, payload) {
-  const { body, footer, options } = payload;
-  
-  // Convert options to proper button format
-  const buttons = (options || []).map((b, i) => ({
-    buttonId: (b.id || `opt_${i}`).toString(),
-    buttonText: { displayText: b.text || `Option ${i + 1}` },
-    type: 1
-  }));
-
-  console.log('🔘 Button payload:', JSON.stringify({ body, footer, buttons }, null, 2));
-
-  // Always send as text message with numbered options for better compatibility
-  const textMessage = body + '\n\n' + (options || []).map((b, i) => `${i + 1}) ${b.text}`).join('\n');
+  const { body, options } = payload;
+  const textMessage = body + '\n\n' + (options || []).map((b, i) => `${i + 1}) ${b.text || `Option ${i + 1}`}`).join('\n');
   await sock.sendMessage(jidTo, { text: textMessage });
-  console.log('📝 Sent text message with options to:', jidTo);
 }
 
 async function sendList(jidTo, payload) {
-  const { title, body, options } = payload;
-  
-  // Convert list to text format for better compatibility
+  const { body, options } = payload;
   let textMessage = body || '';
-  
   if (options && options.length > 0) {
     textMessage += '\n\n';
-    options.forEach((section, sectionIndex) => {
-      if (section.title) {
-        textMessage += `${section.title}:\n`;
-      }
+    options.forEach((section) => {
+      if (section.title) textMessage += `${section.title}:\n`;
       if (section.rows && section.rows.length > 0) {
-        section.rows.forEach((row, rowIndex) => {
-          textMessage += `${rowIndex + 1}) ${row.title}\n`;
+        section.rows.forEach((row, i) => {
+          textMessage += `${i + 1}) ${row.title}\n`;
         });
       }
     });
   }
-  
   await sock.sendMessage(jidTo, { text: textMessage });
-  console.log('📋 Sent list as text to:', jidTo);
 }
 
 async function sendFromPayload(jidTo, payload) {
-  try {
-    console.log('🎯 sendFromPayload called with type:', payload.type);
-    const type = payload.type;
+  const type = payload.type;
+  if (type === 'buttons') return sendButtons(jidTo, payload);
+  if (type === 'list')    return sendList(jidTo, payload);
 
-    if (type === 'buttons') {
-      console.log('🔘 Sending buttons to:', jidTo);
-      return sendButtons(jidTo, payload);
-    }
-    if (type === 'list') {
-      console.log('📋 Sending list to:', jidTo);
-      return sendList(jidTo, payload);
-    }
-
-    // treat text / collect_text / dispatch all as plain text outbound
-    const text = payload.body || '';
-    if (!text) return;
-    console.log('📝 Sending text to:', jidTo);
-    await sock.sendMessage(jidTo, { text });
-  } catch (e) {
-    console.error('❌ sendFromPayload error', e.message);
-  }
+  const text = payload.body || '';
+  if (!text) return;
+  await sock.sendMessage(jidTo, { text });
 }
 
-/* ---------- Admin/Integration endpoints ---------- */
+/* ---------- Admin ---------- */
 
 app.get('/status', (req, res) => {
-  if (isConnected && sock?.user) {
-    return res.json({ status: 'Connected', user: sock.user });
-  }
-  if (qrCodeData) {
-    return res.json({ status: 'Awaiting QR scan' });
-  }
+  if (isConnected && sock?.user) return res.json({ status: 'Connected', user: sock.user });
+  if (qrCodeData) return res.json({ status: 'Awaiting QR scan' });
   return res.json({ status: 'Not connected' });
 });
 
@@ -243,17 +184,12 @@ app.get('/get-qr', async (req, res) => {
   }
 });
 
-// Laravel -> Bot send text
+// Laravel -> send text
 app.post('/send-message', async (req, res) => {
   try {
     const { number, message } = req.body;
-    if (!number || !message) {
-      return res.status(400).json({ error: 'Missing number or message' });
-    }
-
-    const jidTo = jid(number);
-    await sock.sendMessage(jidTo, { text: message });
-
+    if (!number || !message) return res.status(400).json({ error: 'Missing number or message' });
+    await sock.sendMessage(jid(number), { text: message });
     return res.json({ status: 'success', number, message });
   } catch (error) {
     console.error('❌ send-message error:', error);
@@ -261,7 +197,6 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '127.0.0.1';
 

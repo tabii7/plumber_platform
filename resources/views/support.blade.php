@@ -37,7 +37,7 @@
             </a>
         </div>
         <div class="nav-item">
-            <a href="{{ route('admin.requests.index') }}" class="nav-link">
+            <a href="{{ route('requests.index') }}" class="nav-link">
                 <i class="fas fa-tools"></i>
                 <span>Service Requests</span>
             </a>
@@ -150,7 +150,7 @@
                                 <p class="card-text">Chat with us on WhatsApp</p>
                                 <a href="https://wa.me/32123456789" target="_blank" class="btn btn-success">
                                     <i class="fab fa-whatsapp me-2"></i>
-                                    +32 123 456 789
+                                    +32 490 46 80 09
                                 </a>
                             </div>
                         </div>
