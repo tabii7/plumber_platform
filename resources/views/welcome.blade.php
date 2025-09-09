@@ -586,17 +586,821 @@
         .yearly-price div:last-child { color:#059669; font-size:.92rem; }
 
 
-        @media (max-width: 768px) {
+        /* Login Form Styles */
+        .login-form-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 600px;
+            width: 100%;
+        }
+        
+        .login-form {
+            background: white;
+            border: 2px dashed #60a5fa;
+            border-radius: 12px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: block;
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .login-form:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Ensure login form is always visible for guests */
+        .col-lg-5 .login-form-container {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .col-lg-5 .login-form {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+        
+        .login-brand i {
+            color: #10b981;
+        }
+        
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .crossed-out {
+            text-decoration: line-through;
+            color: #ef4444;
+        }
+        
+        .login-subtitle {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            color: #9ca3af;
+            z-index: 2;
+            font-size: 1.1rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #10b981;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 0.8rem;
+            cursor: pointer;
+            z-index: 2;
+        }
+        
+        .password-toggle:hover {
+            color: #10b981;
+        }
+        
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-check {
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-check-input {
+            margin-right: 0.5rem;
+            accent-color: #10b981;
+        }
+        
+        .form-check-label {
+            font-size: 0.9rem;
+            color: #374151;
+            margin: 0;
+        }
+        
+        .forgot-password {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .forgot-password:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-login:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #ef4444;
+        }
+        
+        .is-invalid {
+            border-color: #ef4444;
+        }
+        
+        .is-invalid:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        /* Why Plumbers Join Section Styles */
+        .plumber-section {
+            background: #f8fafc;
+            padding: 100px 0;
+        }
+        
+        .plumber-join-content {
+            padding-right: 2rem;
+        }
+        
+        .section-title-left {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .plumber-join-subtitle {
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        
+        .plumber-benefits {
+            margin-bottom: 2.5rem;
+        }
+        
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        
+        .benefit-icon {
+            width: 40px;
+            height: 40px;
+            background: #10b981;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .benefit-icon i {
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .benefit-text h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+        
+        .benefit-text p {
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .plumber-cta {
+            margin-top: 2rem;
+        }
+        
+        .cta-text {
+            font-size: 1.1rem;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+        }
+        
+        .plumber-image-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-left: 2rem;
+        }
+        
+        .plumber-image-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .plumber-main-image {
+            width: 100%;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .plumber-main-image:hover {
+            transform: scale(1.02);
+        }
+        
+        .floating-tool {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.4rem;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .tool-1 {
+            top: 8%;
+            left: -8%;
+            animation-delay: 0s;
+        }
+        
+        .tool-2 {
+            top: 15%;
+            right: -12%;
+            animation-delay: 0.5s;
+        }
+        
+        .tool-3 {
+            bottom: 25%;
+            left: -6%;
+            animation-delay: 1s;
+        }
+        
+        .tool-4 {
+            bottom: 10%;
+            right: -10%;
+            animation-delay: 1.5s;
+        }
+        
+        .tool-5 {
+            top: 45%;
+            right: -4%;
+            animation-delay: 2s;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+        
+        body.dark .plumber-section {
+            background: #0f172a;
+        }
+        
+        body.dark .section-title-left {
+            color: #f1f5f9;
+        }
+        
+        body.dark .plumber-join-subtitle {
+            color: #cbd5e1;
+        }
+        
+        
+        body.dark .benefit-text h4 {
+            color: #f1f5f9;
+        }
+        
+        body.dark .benefit-text p {
+            color: #cbd5e1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
             .hero-title {
-                font-size: 2.5rem;
+                font-size: 3rem;
             }
             
             .section-title h2 {
+                font-size: 2.2rem;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .hero-section {
+                padding: 100px 0 60px;
+            }
+            
+            .hero-title {
+                font-size: 2.8rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .section {
+                padding: 60px 0;
+            }
+            
+            .plumber-section {
+                padding: 80px 0;
+            }
+            
+            .plumber-join-content {
+                padding-right: 0;
+                margin-bottom: 2rem;
+            }
+            
+            .section-title-left {
+                font-size: 2.4rem;
+            }
+            
+            .plumber-image-container {
+                padding-left: 0;
+                margin-top: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            /* Navbar improvements */
+            .navbar {
+                padding: 0.75rem 0;
+            }
+            
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+            
+            .navbar .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+                margin: 0.25rem 0;
+            }
+            
+            .navbar .btn-plumber {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+            
+            /* Hero section */
+            .hero-section {
+                padding: 80px 0 50px;
+            }
+            
+            .hero-title {
+                font-size: 2.2rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .hero-features {
+                margin: 1.5rem 0;
+            }
+            
+            .hero-features li {
+                font-size: 0.9rem;
+                margin: 0.4rem 0;
+            }
+            
+            .hero-features li i {
+                width: 1.5rem;
+                height: 1.5rem;
+                font-size: 0.9rem;
+                margin-right: 0.5rem;
+            }
+            
+            .hero-stats {
+                margin-top: 2rem;
+                padding: 1.5rem;
+            }
+            
+            .stat-number {
                 font-size: 2rem;
             }
             
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            
+            /* Login form */
+            .login-form-container {
+                min-height: auto;
+                padding: 1rem 0;
+                display: flex !important;
+                visibility: visible !important;
+            }
+            
+            .login-form {
+                margin: 0.5rem;
+                padding: 1.5rem;
+                max-width: 100%;
+                display: block !important;
+                visibility: visible !important;
+            }
+            
+            .login-title {
+                font-size: 1.5rem;
+            }
+            
+            .form-control {
+                padding: 12px 12px 12px 40px;
+                font-size: 0.95rem;
+            }
+            
+            .input-icon {
+                left: 12px;
+                font-size: 1rem;
+            }
+            
+            .btn-login {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            
+            /* Sections */
+            .section {
+                padding: 50px 0;
+            }
+            
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+            
+            .section-title p {
+                font-size: 1rem;
+            }
+            
             .about-content h2 {
-                font-size: 2rem;
+                font-size: 1.8rem;
+            }
+            
+            .about-content p {
+                font-size: 1rem;
+            }
+            
+            .feature-item {
+                margin-bottom: 1.2rem;
+            }
+            
+            .feature-icon {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .feature-icon i {
+                font-size: 0.9rem;
+            }
+            
+            /* Service cards */
+            .service-card {
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .service-icon {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 1rem;
+            }
+            
+            .service-icon i {
+                font-size: 1.2rem;
+            }
+            
+            .service-card h3 {
+                font-size: 1.1rem;
+            }
+            
+            .service-card p {
+                font-size: 0.9rem;
+            }
+            
+            /* Plumber section */
+            .plumber-section {
+                padding: 60px 0;
+            }
+            
+            .section-title-left {
+                font-size: 1.8rem;
+            }
+            
+            .plumber-join-subtitle {
+                font-size: 1rem;
+            }
+            
+            .benefit-item {
+                margin-bottom: 1.2rem;
+            }
+            
+            .benefit-icon {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .benefit-icon i {
+                font-size: 0.9rem;
+            }
+            
+            .plumber-image-wrapper {
+                max-width: 100%;
+            }
+            
+            .floating-tool {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            .tool-1, .tool-2, .tool-3, .tool-4, .tool-5 {
+                display: none;
+            }
+            
+            /* Pricing section */
+            .pricing-section {
+                padding: 60px 0;
+            }
+            
+            .pricing-card {
+                padding: 24px 20px;
+                margin-bottom: 1.5rem;
+            }
+            
+            .pricing-card h3 {
+                font-size: 1.2rem;
+            }
+            
+            .current-price {
+                font-size: 1.8rem;
+            }
+            
+            .pricing-features li {
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            /* Contact section */
+            .contact-card {
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .contact-icon {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 1rem;
+            }
+            
+            .contact-icon i {
+                font-size: 1.2rem;
+            }
+            
+            .contact-card h3 {
+                font-size: 1.1rem;
+            }
+            
+            .contact-card p {
+                font-size: 0.9rem;
+            }
+            
+            /* Footer */
+            .footer {
+                padding: 1.5rem 0;
+            }
+            
+            .footer-links {
+                justify-content: center;
+                margin-top: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            /* Extra small devices */
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .hero-title {
+                font-size: 1.8rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 0.95rem;
+            }
+            
+            .section-title h2 {
+                font-size: 1.6rem;
+            }
+            
+            .section-title-left {
+                font-size: 1.6rem;
+            }
+            
+            .about-content h2 {
+                font-size: 1.6rem;
+            }
+            
+            .login-form {
+                padding: 1rem;
+            }
+            
+            .login-title {
+                font-size: 1.3rem;
+            }
+            
+            .form-control {
+                padding: 10px 10px 10px 35px;
+                font-size: 0.9rem;
+            }
+            
+            .input-icon {
+                left: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .service-card {
+                padding: 1.2rem;
+            }
+            
+            .pricing-card {
+                padding: 20px 16px;
+            }
+            
+            .contact-card {
+                padding: 1.2rem;
+            }
+            
+            .hero-stats {
+                padding: 1rem;
+            }
+            
+            .stat-number {
+                font-size: 1.8rem;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem;
+            }
+            
+            /* Button improvements */
+            .btn {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .btn-lg {
+                padding: 0.875rem 1.75rem;
+                font-size: 1rem;
+            }
+            
+            /* Flex improvements for mobile */
+            .d-flex.flex-wrap.gap-3 {
+                flex-direction: column;
+                gap: 0.75rem !important;
+            }
+            
+            .d-flex.flex-wrap.gap-3 .btn {
+                width: 100%;
+                margin: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Very small devices */
+            .hero-title {
+                font-size: 1.6rem;
+            }
+            
+            .section-title h2 {
+                font-size: 1.4rem;
+            }
+            
+            .section-title-left {
+                font-size: 1.4rem;
+            }
+            
+            .about-content h2 {
+                font-size: 1.4rem;
+            }
+            
+            .login-form {
+                padding: 0.8rem;
+            }
+            
+            .login-title {
+                font-size: 1.2rem;
+            }
+            
+            .service-card {
+                padding: 1rem;
+            }
+            
+            .pricing-card {
+                padding: 16px 12px;
+            }
+            
+            .contact-card {
+                padding: 1rem;
             }
         }
     </style>
@@ -609,7 +1413,7 @@
                 <i class="fas fa-wrench me-2"></i>ProPlumber
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
@@ -635,10 +1439,10 @@
                     </li>
 
                     @guest
-                                            <li class="nav-item me-2">
-                        <a href="{{ url('/login') }}" class="btn btn-outline">Login</a>
-                    </li>
-                        <li class="nav-item">
+                        <li class="nav-item d-block d-lg-none">
+                            <a href="/client/register" class="btn btn-primary w-100">Get Started</a>
+                        </li>
+                        <li class="nav-item d-none d-lg-block">
                             <a href="/client/register" class="btn btn-primary">Get Started</a>
                         </li>
                     @else
@@ -677,14 +1481,11 @@
                         
                         <div class="d-flex flex-wrap gap-3 mb-4">
                             @guest
-                                <a href="{{ url('/login') }}" class="btn btn-outline btn-lg">
-                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                <a href="#pricing" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-crown me-2"></i>View Pricing Plans
                                 </a>
-                                <a href="/client/register" class="btn btn-primary btn-lg me-3">
-                                    <i class="fas fa-user me-2"></i>Register as Client
-                                </a>
-                                <a href="/plumber/register" class="btn btn-plumber btn-lg me-3">
-                                    <i class="fas fa-tools me-2"></i>Register as Plumber
+                                <a href="/client/register" class="btn btn-outline btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i>Join to hire a Plumber
                                 </a>
                             @else
                                 <a href="{{ route('dashboard') }}" class="btn btn-outline btn-lg">
@@ -725,19 +1526,90 @@
                     </div>
                 </div>
                 <div class="col-lg-5">
-                    <div class="text-center">
-                        <div style="position: relative;">
-                            <div style="width: 300px; height: 300px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-wrench" style="font-size: 8rem; color: #10b981; opacity: 0.8;"></i>
-                            </div>
-                            <div style="position: absolute; top: -20px; right: 50px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-tools" style="font-size: 2rem; color: #e2e8f0;"></i>
-                            </div>
-                            <div style="position: absolute; bottom: -20px; left: 50px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-cog" style="font-size: 1.5rem; color: #e2e8f0;"></i>
-                            </div>
+                    <!-- Login Form -->
+                    <div class="login-form-container" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
+                        <div class="login-form" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+                                <div class="login-header">
+                                    <div class="login-brand">
+                                        <i class="fas fa-building me-2"></i>loodgieter.app
+                                    </div>
+                                    <h2 class="login-title">
+                                        Welcome 
+                                    </h2>
+                                    <p class="login-subtitle">Sign in to your account</p>
+                                </div>
+                                
+                                <form method="POST" action="{{ route('login') }}" class="login-form-fields">
+                                    @csrf
+                                    
+                                    <div class="form-group">
+                                        <label for="email" class="form-label">Email</label>
+                                        <div class="input-group">
+                                            <i class="fas fa-envelope input-icon"></i>
+                                            <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" 
+                                                   name="email"  required autocomplete="email" placeholder="Enter your email address" autofocus>
+                                        </div>
+                                        @error('email')
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="password" class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <i class="fas fa-lock input-icon"></i>
+                                            <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" 
+                                                   name="password" required autocomplete="current-password" placeholder="Enter your password">
+                                            <button type="button" class="password-toggle" onclick="togglePassword()">
+                                                <span class="show-text">Show</span>
+                                            </button>
+                                        </div>
+                                        @error('password')
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
+                                        @enderror
+                                    </div>
+                                    
+                                    <div class="form-options">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="remember">
+                                                Remember me
+                                            </label>
+                                        </div>
+                                        @if (Route::has('password.request'))
+                                            <a class="forgot-password" href="{{ route('password.request') }}">
+                                                Forgot password?
+                                            </a>
+                                        @endif
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-login">
+                                        Log in
+                                    </button>
+                                </form>
                         </div>
                     </div>
+                    
+                    @auth
+                        <!-- Show this for logged in users -->
+                        <div class="text-center">
+                            <div style="position: relative;">
+                                <div style="width: 300px; height: 300px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-wrench" style="font-size: 8rem; color: #10b981; opacity: 0.8;"></i>
+                                </div>
+                                <div style="position: absolute; top: -20px; right: 50px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-tools" style="font-size: 2rem; color: #e2e8f0;"></i>
+                                </div>
+                                <div style="position: absolute; bottom: -20px; left: 50px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-cog" style="font-size: 1.5rem; color: #e2e8f0;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    @endauth
                 </div>
             </div>
         </div>
@@ -868,6 +1740,105 @@
                         <h3>Leak Detection</h3>
                         <p>Advanced leak detection services using modern technology to find and repair hidden water leaks.</p>
                         <a href="{{ url('/login') }}" class="btn btn-outline">Get Started</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Plumbers Join Section -->
+    <section class="section plumber-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-5">
+                    <div class="plumber-join-content">
+                        <h2 class="section-title-left">Why plumbers Join loodgieter.app?</h2>
+                        <p class="plumber-join-subtitle">Be part of the fastest-growing platform connecting plumbers directly with real clients in your area. Subscription as a plumber is 100% free and brings you closer to the jobs that matter.</p>
+                        
+                        <div class="plumber-benefits">
+                            <div class="benefit-item">
+                                <div class="benefit-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <div class="benefit-text">
+                                    <h4>Direct contact with clients</h4>
+                                    <p>No middleman. Talk to customers right away and secure new projects without delays.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">
+                                    <i class="fas fa-shield-check"></i>
+                                </div>
+                                <div class="benefit-text">
+                                    <h4>Verified clients</h4>
+                                    <p>We check every request so you only receive genuine leads.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="benefit-text">
+                                    <h4>More visibility</h4>
+                                    <p>Showcase your services to people searching for plumbers in your region, 24/7.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">
+                                    <i class="fas fa-gift"></i>
+                                </div>
+                                <div class="benefit-text">
+                                    <h4>No hidden costs</h4>
+                                    <p>Signing up is free for ever.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="benefit-item">
+                                <div class="benefit-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="benefit-text">
+                                    <h4>Flexibility</h4>
+                                    <p>Set your own working hours, holiday, choose your coverage area, and manage your own schedule.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="plumber-cta">
+                            <p class="cta-text">Start today, grow your business, and let new customers find you easily.</p>
+                            <a href="/plumber/register" class="btn btn-primary btn-lg">
+                                <i class="fas fa-tools me-2"></i>Plumbers Join now – it's free!
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="plumber-image-container">
+                        <div class="plumber-image-wrapper">
+                            <img src="{{ asset('front/plumber-section.jpeg') }}" 
+                                 alt="Professional Plumber with Tools" 
+                                 class="plumber-main-image">
+                            
+                            <!-- Floating tool elements -->
+                            <div class="floating-tool tool-1">
+                                <i class="fas fa-wrench"></i>
+                            </div>
+                            <div class="floating-tool tool-2">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="floating-tool tool-3">
+                                <i class="fas fa-screwdriver"></i>
+                            </div>
+                            <div class="floating-tool tool-4">
+                                <i class="fas fa-hammer"></i>
+                            </div>
+                            <div class="floating-tool tool-5">
+                                <i class="fas fa-cog"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1066,10 +2037,69 @@
         </div>
     </footer>
 
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Password Toggle Function -->
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleButton = document.querySelector('.password-toggle .show-text');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.textContent = 'Hide';
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.textContent = 'Show';
+            }
+        }
+        
+        // Initialize dark mode on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize dark mode state from localStorage
+            const savedDarkMode = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const shouldBeDark = savedDarkMode === 'true' || (!savedDarkMode && prefersDark);
+            
+            if (shouldBeDark) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
+            
+            console.log('Dark mode initialized on page load:', shouldBeDark);
+            
+            // Check if Alpine.js is loaded
+            if (typeof Alpine === 'undefined') {
+                console.log('Alpine.js not loaded, using fallback dark mode toggle');
+                
+                // Add fallback dark mode functionality
+                const toggleButton = document.querySelector('.toggle-switch');
+                if (toggleButton) {
+                    toggleButton.addEventListener('click', function() {
+                        const isDark = document.body.classList.contains('dark');
+                        
+                        if (isDark) {
+                            document.documentElement.classList.remove('dark');
+                            document.body.classList.remove('dark');
+                            localStorage.setItem('darkMode', 'false');
+                        } else {
+                            document.documentElement.classList.add('dark');
+                            document.body.classList.add('dark');
+                            localStorage.setItem('darkMode', 'true');
+                        }
+                        
+                        console.log('Fallback dark mode toggled to:', !isDark ? 'dark' : 'light');
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html>

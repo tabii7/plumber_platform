@@ -286,14 +286,7 @@
         <fieldset class="section-card">
           <legend>YOUR DETAILS</legend>
           <div class="field-grid">
-            <div class="field span-2">
-              <label class="label" for="whatsapp_number">WhatsApp number</label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M16.5 13.4c-.3-.2-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.1.1-.3.1-.6 0-1.6-.6-2.9-1.8-3.8-3.4-.1-.3 0-.5.1-.6.1-.1.2-.3.3-.5.1-.1.1-.3.2-.5 0-.2 0-.4-.1-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1.1 1.1-1.1 2.7s1.1 3.1 1.2 3.3c.1.2 2.1 3.3 5.1 4.6.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.8-1.4.2-.7.2-1.3.1-1.4-.1-.2-.2-.2-.5-.4zM12 2a10 10 0 0 0-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                <input id="whatsapp_number" name="whatsapp_number" value="{{ old('whatsapp_number') }}" placeholder="324xxxxxxxx" required>
-              </div>
-              @error('whatsapp_number')<div class="error">{{ $message }}</div>@enderror
-            </div>
+          
 
             <div class="field span-2">
               <label class="label" for="full_name">Full name</label>
@@ -304,8 +297,16 @@
               @error('full_name')<div class="error">{{ $message }}</div>@enderror
             </div>
 
+            <div class="field span-2">
+              <label class="label" for="whatsapp_number">WhatsApp number</label>
+              <div class="control">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M16.5 13.4c-.3-.2-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.1.1-.3.1-.6 0-1.6-.6-2.9-1.8-3.8-3.4-.1-.3 0-.5.1-.6.1-.1.2-.3.3-.5.1-.1.1-.3.2-.5 0-.2 0-.4-.1-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1.1 1.1-1.1 2.7s1.1 3.1 1.2 3.3c.1.2 2.1 3.3 5.1 4.6.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.8-1.4.2-.7.2-1.3.1-1.4-.1-.2-.2-.2-.5-.4zM12 2a10 10 0 0 0-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                <input id="whatsapp_number" name="whatsapp_number" value="{{ old('whatsapp_number') }}" placeholder="324xxxxxxxx" required>
+              </div>
+              @error('whatsapp_number')<div class="error">{{ $message }}</div>@enderror
+            </div>
             <div class="field">
-              <label class="label" for="company_name">Company name <span class="hint">(optional)</span></label>
+               <label class="label" for="company_name">Company name <span class="hint">(optional)</span></label>
               <div class="control">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M3 7h18M3 3h18M7 21V7M17 21V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 <input id="company_name" name="company_name" value="{{ old('company_name') }}" placeholder="Leave empty for personal account">

@@ -119,6 +119,12 @@ class PlumberSchedule extends Model
                 return $checkDate->setTime(0, 0);
             }
             
+            if ($mode === 'split') {
+                $split = $daySchedule['split'] ?? [];
+                $openTime = Carbon::parse($split['o1']);
+                return $checkDate->setTime($openTime->hour, $openTime->minute);
+            }
+            
             if ($mode === 'fullday') {
                 $full = $daySchedule['full'] ?? [];
                 $openTime = Carbon::parse($full['o']);

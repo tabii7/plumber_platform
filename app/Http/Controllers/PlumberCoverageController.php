@@ -135,6 +135,14 @@ class PlumberCoverageController extends Controller
             return response()->json([]);
         }
 
+        // First, add the user's own municipality at the top (distance = 0)
+        $userMunicipality = [
+            'Hoofdgemeente' => $municipality,
+            'Latitude' => $center->Latitude,
+            'Longitude' => $center->Longitude,
+            'distance' => 0.0
+        ];
+
         // Find nearby municipalities using Haversine formula
         $nearby = DB::table('postal_codes')
             ->select('Hoofdgemeente', 'Latitude', 'Longitude')
@@ -152,7 +160,10 @@ class PlumberCoverageController extends Controller
             ->limit(10)
             ->get();
 
-        return response()->json($nearby);
+        // Combine user's municipality (at top) with nearby municipalities
+        $allMunicipalities = collect([$userMunicipality])->merge($nearby);
+
+        return response()->json($allMunicipalities);
     }
 
     // AJAX: bulk add multiple municipalities and cities

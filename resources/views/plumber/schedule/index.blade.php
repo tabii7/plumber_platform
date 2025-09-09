@@ -27,6 +27,20 @@
     </div>
     
     <div class="nav-item">
+        <a href="{{ route('plumber.categories.edit') }}" class="nav-link">
+            <i class="fas fa-tools"></i>
+            <span>Service Categories</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('requests.index') }}" class="nav-link">
+            <i class="fas fa-list-alt"></i>
+            <span>Service Requests</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
         <a href="{{ route('support') }}" class="nav-link">
             <i class="fas fa-headset"></i>
             <span>Support</span>
@@ -81,12 +95,43 @@
             <div style="font-weight: bold; color: #333; margin-bottom: 10px; font-size: 16px;">{{ $label }}</div>
             
             <!-- Mode Buttons -->
-            <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
-              <button type="button" class="mode-btn {{ $mode === 'closed' ? 'active' : '' }}" data-mode="closed" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'closed' ? '#007bff' : 'white' }}; color: {{ $mode === 'closed' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Closed</button>
-              <button type="button" class="mode-btn {{ $mode === 'open24' ? 'active' : '' }}" data-mode="open24" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'open24' ? '#007bff' : 'white' }}; color: {{ $mode === 'open24' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">24 Hours</button>
-              <button type="button" class="mode-btn {{ $mode === 'split' ? 'active' : '' }}" data-mode="split" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'split' ? '#007bff' : 'white' }}; color: {{ $mode === 'split' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Split Hours</button>
-              <button type="button" class="mode-btn {{ $mode === 'fullday' ? 'active' : '' }}" data-mode="fullday" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'fullday' ? '#007bff' : 'white' }}; color: {{ $mode === 'fullday' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Full Day</button>
-                                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="mode-btn {{ $mode === 'closed' ? 'active' : '' }}" data-mode="closed" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'closed' ? '#007bff' : 'white' }}; color: {{ $mode === 'closed' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Closed</button>
+                <button type="button" class="mode-btn {{ $mode === 'open24' ? 'active' : '' }}" data-mode="open24" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'open24' ? '#007bff' : 'white' }}; color: {{ $mode === 'open24' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">24 Hours</button>
+                <button type="button" class="mode-btn {{ $mode === 'split' ? 'active' : '' }}" data-mode="split" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'split' ? '#007bff' : 'white' }}; color: {{ $mode === 'split' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Split Hours</button>
+                <button type="button" class="mode-btn {{ $mode === 'fullday' ? 'active' : '' }}" data-mode="fullday" style="padding: 6px 12px; border: 1px solid #ccc; background: {{ $mode === 'fullday' ? '#007bff' : 'white' }}; color: {{ $mode === 'fullday' ? 'white' : '#333' }}; border-radius: 4px; cursor: pointer; font-size: 14px;">Full Day</button>
+              </div>
+              
+              <!-- Status Display -->
+              @php
+                $statusText = '';
+                $statusColor = '';
+                
+                switch($mode) {
+                  case 'closed':
+                    $statusText = 'Closed';
+                    $statusColor = '#dc3545';
+                    break;
+                  case 'open24':
+                    $statusText = '24 Hours';
+                    $statusColor = '#28a745';
+                    break;
+                  case 'split':
+                    $statusText = 'Split Hours';
+                    $statusColor = '#007bff';
+                    break;
+                  case 'fullday':
+                    $statusText = 'Full Day';
+                    $statusColor = '#17a2b8';
+                    break;
+                  default:
+                    $statusText = 'Split Hours';
+                    $statusColor = '#007bff';
+                }
+              @endphp
+              <span class="day-status-badge" data-day="{{ $key }}" style="font-size: 14px; font-weight: 500; color: {{ $statusColor }};">{{ $statusText }}</span>
+            </div>
 
             <input type="hidden" name="schedule_data[{{ $key }}][mode]" value="{{ $mode }}">
             
@@ -214,6 +259,9 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     // Update hidden input
     daySchedule.querySelector('input[name*="[mode]"]').value = mode;
     
+    // Update status badge on the right side
+    updateStatusBadge(day, mode);
+    
     // Show/hide time inputs
     const splitInputs = daySchedule.querySelector('.split-inputs');
     const fullInputs = daySchedule.querySelector('.full-inputs');
@@ -228,6 +276,40 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
             }
         });
     });
+
+// Function to update status badge inline with the tabs
+function updateStatusBadge(day, mode) {
+  const statusBadge = document.querySelector(`.day-status-badge[data-day="${day}"]`);
+  if (statusBadge) {
+    let statusText = '';
+    let statusColor = '';
+    
+    switch(mode) {
+      case 'closed':
+        statusText = 'Closed';
+        statusColor = '#dc3545';
+        break;
+      case 'open24':
+        statusText = '24 Hours';
+        statusColor = '#28a745';
+        break;
+      case 'split':
+        statusText = 'Split Hours';
+        statusColor = '#007bff';
+        break;
+      case 'fullday':
+        statusText = 'Full Day';
+        statusColor = '#17a2b8';
+        break;
+      default:
+        statusText = 'Split Hours';
+        statusColor = '#007bff';
+    }
+    
+    statusBadge.textContent = statusText;
+    statusBadge.style.color = statusColor;
+  }
+}
 
 // Holiday management
 function addHoliday() {

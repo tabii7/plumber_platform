@@ -172,6 +172,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/whatsapp',        [AdminWhatsAppController::class, 'index'])->name('admin.whatsapp');
     Route::get('/admin/whatsapp/qr',     [AdminWhatsAppController::class, 'qr'])->name('admin.whatsapp.qr');
     Route::get('/admin/whatsapp/status', [AdminWhatsAppController::class, 'status'])->name('admin.whatsapp.status');
+    Route::post('/admin/whatsapp/logout', [AdminWhatsAppController::class, 'logout'])->name('admin.whatsapp.logout');
     Route::post('/admin/whatsapp/test-send', [AdminWhatsAppController::class, 'testSend'])->name('admin.whatsapp.testSend');
 
     // Flows + nested Nodes (custom messages)

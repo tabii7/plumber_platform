@@ -1,3 +1,4 @@
+// whatsapp-bot/index.js
 require('dotenv').config();
 
 const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
@@ -94,12 +95,15 @@ async function connectToWhatsApp() {
         if (!remember(id)) return;
 
         const from = msg.key.remoteJid;
+
+        // text variants
         const plain =
           msg.message.conversation ||
           msg.message.extendedTextMessage?.text ||
           msg.message?.ephemeralMessage?.message?.extendedTextMessage?.text ||
           '';
 
+        // (we are not using interactive buttons in outbound; we still parse these if present)
         const buttonId = msg.message?.buttonsResponseMessage?.selectedButtonId;
         const listRowId = msg.message?.listResponseMessage?.singleSelectReply?.selectedRowId;
 
@@ -127,29 +131,39 @@ async function connectToWhatsApp() {
   }
 }
 
-/* ---------- Outbound ---------- */
+/* ---------- Outbound (we render everything as text to avoid double-numbering) ---------- */
 
 async function sendButtons(jidTo, payload) {
   const { body, options } = payload;
-  const textMessage = body + '\n\n' + (options || []).map((b, i) => `${i + 1}) ${b.text || `Option ${i + 1}`}`).join('\n');
-  await sock.sendMessage(jidTo, { text: textMessage });
+  const lines = [];
+  lines.push(body || '');
+  if (options && options.length) {
+    lines.push('');
+    options.forEach((opt, i) => {
+      const clean = String(opt.text || `Option ${i+1}`).replace(/^\s*\d+[\.\)]\s*/, '');
+      lines.push(`${i+1}) ${clean}`);
+    });
+  }
+  await sock.sendMessage(jidTo, { text: lines.join('\n') });
 }
 
 async function sendList(jidTo, payload) {
   const { body, options } = payload;
-  let textMessage = body || '';
-  if (options && options.length > 0) {
-    textMessage += '\n\n';
+  const lines = [];
+  lines.push(body || '');
+  if (options && options.length) {
+    lines.push('');
     options.forEach((section) => {
-      if (section.title) textMessage += `${section.title}:\n`;
-      if (section.rows && section.rows.length > 0) {
+      if (section.title) lines.push(`${section.title}:`);
+      if (section.rows && section.rows.length) {
         section.rows.forEach((row, i) => {
-          textMessage += `${i + 1}) ${row.title}\n`;
+          const clean = String(row.title || `Option ${i+1}`).replace(/^\s*\d+[\.\)]\s*/, '');
+          lines.push(`${i+1}) ${clean}`);
         });
       }
     });
   }
-  await sock.sendMessage(jidTo, { text: textMessage });
+  await sock.sendMessage(jidTo, { text: lines.join('\n') });
 }
 
 async function sendFromPayload(jidTo, payload) {
@@ -194,6 +208,40 @@ app.post('/send-message', async (req, res) => {
   } catch (error) {
     console.error('❌ send-message error:', error);
     return res.status(500).json({ error: 'Failed to send message', details: error.message });
+  }
+});
+
+// Logout endpoint - clears session and disconnects
+app.post('/logout', async (req, res) => {
+  try {
+    console.log('🚪 Logout requested...');
+    if (sock) { await sock.logout(); sock = null; }
+
+    const fs = require('fs');
+    const path = require('path');
+
+    try {
+      if (fs.existsSync('./auth_info')) {
+        fs.rmSync('./auth_info', { recursive: true, force: true });
+        console.log('✅ Auth info directory cleared');
+      }
+      ['.wwebjs_auth','sessions','store'].forEach(dir => {
+        if (fs.existsSync(dir)) { fs.rmSync(dir, { recursive:true, force:true }); console.log(`✅ ${dir} directory cleared`); }
+      });
+      (fs.readdirSync('.')).forEach(file => {
+        if ((file.includes('auth') || file.includes('session') || file.includes('store')) && file.endsWith('.json')) {
+          fs.unlinkSync(file);
+          console.log(`✅ ${file} file removed`);
+        }
+      });
+    } catch (fe) { console.log('⚠️ Some files could not be cleared:', fe.message); }
+
+    isConnected = false; qrCodeData = null; reconnectAttempts = 0;
+    console.log('✅ Logout completed successfully');
+    res.json({ success:true, message:'Logged out successfully. Please restart the bot to reconnect.' });
+  } catch (error) {
+    console.error('❌ Error during logout:', error);
+    res.status(500).json({ success:false, error:'Failed to logout properly' });
   }
 });
 

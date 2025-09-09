@@ -292,14 +292,7 @@
         <fieldset class="section-card">
           <legend>YOUR DETAILS</legend>
           <div class="field-grid">
-            <div class="field span-2">
-              <label class="label" for="whatsapp_number">WhatsApp number <span class="required">*</span></label>
-              <div class="control">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M16.5 13.4c-.3-.2-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.1.1-.3.1-.6 0-1.6-.6-2.9-1.8-3.8-3.4-.1-.3 0-.5.1-.6.1-.1.2-.3.3-.5.1-.1.1-.3.2-.5 0-.2 0-.4-.1-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1.1 1.1-1.1 2.7s1.1 3.1 1.2 3.3c.1.2 2.1 3.3 5.1 4.6.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.8-1.4.2-.7.2-1.3.1-1.4-.1-.2-.2-.2-.5-.4zM12 2a10 10 0 0 0-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                <input id="whatsapp_number" name="whatsapp_number" value="{{ old('whatsapp_number') }}" placeholder="324xxxxxxxx" required>
-              </div>
-              @error('whatsapp_number')<div class="error">{{ $message }}</div>@enderror
-            </div>
+           
 
             <div class="field span-2">
               <label class="label" for="full_name">Full name <span class="required">*</span></label>
@@ -308,6 +301,15 @@
                 <input id="full_name" name="full_name" value="{{ old('full_name') }}" placeholder="John Doe" required>
               </div>
               @error('full_name')<div class="error">{{ $message }}</div>@enderror
+            </div>
+
+            <div class="field span-2">
+              <label class="label" for="whatsapp_number">WhatsApp number <span class="required">*</span></label>
+              <div class="control">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M16.5 13.4c-.3-.2-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.1.1-.3.1-.6 0-1.6-.6-2.9-1.8-3.8-3.4-.1-.3 0-.5.1-.6.1-.1.2-.3.3-.5.1-.1.1-.3.2-.5 0-.2 0-.4-.1-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1.1 1.1-1.1 2.7s1.1 3.1 1.2 3.3c.1.2 2.1 3.3 5.1 4.6.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.8-1.4.2-.7.2-1.3.1-1.4-.1-.2-.2-.2-.5-.4zM12 2a10 10 0 0 0-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                <input id="whatsapp_number" name="whatsapp_number" value="{{ old('whatsapp_number') }}" placeholder="324xxxxxxxx" required>
+              </div>
+              @error('whatsapp_number')<div class="error">{{ $message }}</div>@enderror
             </div>
 
             <div class="field span-2">
@@ -485,6 +487,20 @@
         return parts.join(', ');
       }
 
+      function formatOSMLabel(addr) {
+        if (!addr) return '';
+        
+        // Create clean two-line format like in adres-test.php
+        const line1 = [addr.road || addr.pedestrian || addr.path || '', addr.house_number || ''].filter(Boolean).join(' ');
+        const line2 = [addr.postcode || '', addr.city || addr.town || addr.village || addr.municipality || ''].filter(Boolean).join(' ');
+        
+        const parts = [];
+        if (line1) parts.push(line1);
+        if (line2) parts.push(line2);
+        
+        return parts.join(', ');
+      }
+
       async function fetchJSON(url) {
         const r = await fetch(url);
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -557,7 +573,13 @@
         }
         
         sugg.innerHTML = list.map((it, i) => {
-          const label = (src === 'vl') ? (it?.Suggestion?.Label || '') : (it?.display_name || '');
+          let label;
+          if (src === 'vl') {
+            label = it?.Suggestion?.Label || '';
+          } else {
+            // Use our clean formatting for OSM results (like adres-test.php)
+            label = formatOSMLabel(it?.address) || '';
+          }
           const b = (src === 'vl') ? 'VL' : 'OSM';
           return `<div class="s-item${i === activeIndex ? ' active' : ''}" data-i="${i}" data-src="${b}">
             <span class="s-badge">[${b}]</span>
@@ -575,9 +597,13 @@
         if (i<0 || i>=items.length) return;
         const src = (srcBadge==='VL') ? 'vl' : 'osm';
 
-        const label = (src==='vl')
-          ? (items[i]?.Suggestion?.Label || '')
-          : (items[i]?.display_name || '');
+        let label;
+        if (src==='vl') {
+          label = items[i]?.Suggestion?.Label || '';
+        } else {
+          // Use our clean formatting for OSM results (like adres-test.php)
+          label = formatOSMLabel(items[i]?.address) || '';
+        }
 
         input.value = label;
         sugg.style.display = 'none';
@@ -628,10 +654,11 @@
         const streetName = addr.road || addr.pedestrian || addr.path || '';
         const houseNumber = addr.house_number || '';
         const postalCode = addr.postcode || '';
+        // Prioritize city over town over village over municipality to avoid "municipal" text
         const cityName = addr.city || addr.town || addr.village || addr.municipality || '';
         
-        // Fill form fields
-        input.value = [streetName, houseNumber].filter(Boolean).join(' ');
+        // Fill form fields with properly formatted address
+        input.value = formatOSMLabel(addr);
         number.value = houseNumber;
         zip.value = postalCode;
         city.value = cityName;

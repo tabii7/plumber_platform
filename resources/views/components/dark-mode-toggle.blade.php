@@ -120,12 +120,18 @@ function darkMode() {
                          (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
             
             this.applyTheme();
+            
+            // Debug log
+            console.log('Dark mode initialized:', this.isDark);
         },
         
         toggle() {
             this.isDark = !this.isDark;
             this.applyTheme();
             localStorage.setItem('darkMode', this.isDark);
+            
+            // Debug log
+            console.log('Dark mode toggled to:', this.isDark);
         },
         
         applyTheme() {
@@ -136,6 +142,9 @@ function darkMode() {
                 document.documentElement.classList.remove('dark');
                 document.body.classList.remove('dark');
             }
+            
+            // Debug log
+            console.log('Theme applied:', this.isDark ? 'dark' : 'light');
         }
     }
 }

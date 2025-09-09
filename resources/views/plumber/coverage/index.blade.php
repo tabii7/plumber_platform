@@ -26,7 +26,19 @@
         </a>
     </div>
     
-
+    <div class="nav-item">
+        <a href="{{ route('plumber.categories.edit') }}" class="nav-link">
+            <i class="fas fa-tools"></i>
+            <span>Service Categories</span>
+        </a>
+    </div>
+    
+    <div class="nav-item">
+        <a href="{{ route('requests.index') }}" class="nav-link">
+            <i class="fas fa-list-alt"></i>
+            <span>Service Requests</span>
+        </a>
+    </div>
     
     <div class="nav-item">
         <a href="{{ route('support') }}" class="nav-link">
@@ -384,19 +396,26 @@ function displayNearbyTree(municipalityData) {
     // Sort by distance
     municipalityData.sort((a, b) => a.distance - b.distance);
     
-    nearbyTree.innerHTML = municipalityData.map(item => {
+    nearbyTree.innerHTML = municipalityData.map((item, index) => {
         const isAlreadyCovered = existingMunicipalities.includes(item.municipality);
         const checkboxDisabled = isAlreadyCovered ? 'disabled' : '';
         const checkboxClass = isAlreadyCovered ? 'form-check-input text-muted' : 'form-check-input text-primary';
         const itemClass = isAlreadyCovered ? 'bg-light' : '';
         const statusText = isAlreadyCovered ? ' (Already covered)' : '';
-        const sourcesText = item.sources.length > 1 ? ` (Near ${item.sources.join(', ')})` : ` (Near ${item.sources[0]})`;
+        
+        // Special styling for user's own municipality (distance = 0)
+        const isUserMunicipality = item.distance === 0;
+        const userMunicipalityClass = '';
+        const userMunicipalityBg = '';
+        const userMunicipalityIcon = 'fas fa-plus expand-icon text-muted';
+        const userMunicipalityText = isUserMunicipality ? 'Your Municipality' : (item.sources.length > 1 ? `Near ${item.sources.join(', ')}` : `Near ${item.sources[0]}`);
+        const distanceText = isUserMunicipality ? 'Your Location' : `${item.distance.toFixed(1)}km`;
         
         return `
-            <div class="municipality-item border rounded ${itemClass}">
+            <div class="municipality-item border rounded ${itemClass} ${userMunicipalityClass} ${userMunicipalityBg}">
                 <div class="d-flex align-items-center p-2">
                     <div class="expand-area d-flex align-items-center me-2" data-municipality="${item.municipality}" style="cursor: pointer; padding: 4px;">
-                        <i class="fas fa-plus expand-icon text-muted" style="font-size: 0.8rem; transition: transform 0.2s;"></i>
+                        <i class="${userMunicipalityIcon}" style="font-size: 0.8rem; transition: transform 0.2s;"></i>
                     </div>
                     <input type="checkbox" id="municipality-${item.municipality}" 
                            class="${checkboxClass} me-2"
@@ -404,8 +423,11 @@ function displayNearbyTree(municipalityData) {
                            data-type="municipality"
                            ${checkboxDisabled}>
                     <label for="municipality-${item.municipality}" class="flex-fill small" style="cursor: pointer;">
-                        <div class="fw-medium">${item.municipality} (${item.distance.toFixed(1)}km)${statusText}</div>
-                        <div class="text-muted small">${sourcesText}</div>
+                        <div class="fw-medium">
+                            ${isUserMunicipality ? '<i class="fas fa-star text-warning me-1"></i>' : ''}
+                            ${item.municipality} (${distanceText})${statusText}
+                        </div>
+                        <div class="text-muted small">${userMunicipalityText}</div>
                     </label>
                 </div>
                 <div class="cities-container d-none ps-5 pe-2 pb-2">
@@ -428,7 +450,7 @@ function displayNearbyTree(municipalityData) {
         const municipality = expandArea.dataset.municipality;
         const municipalityItem = expandArea.closest('.municipality-item');
         const citiesContainer = municipalityItem.querySelector('.cities-container');
-        const expandIcon = expandArea.querySelector('.expand-icon');
+        const expandIcon = expandArea.querySelector('i');
         
         console.log('Municipality:', municipality); // Debug log
         console.log('Cities container:', citiesContainer); // Debug log
@@ -437,6 +459,8 @@ function displayNearbyTree(municipalityData) {
             // Expand
             console.log('Expanding...'); // Debug log
             citiesContainer.classList.remove('d-none');
+            
+            // Change to minus icon
             expandIcon.className = 'fas fa-minus expand-icon text-muted';
             expandIcon.style.transform = 'rotate(0deg)';
             
@@ -446,6 +470,8 @@ function displayNearbyTree(municipalityData) {
             // Collapse
             console.log('Collapsing...'); // Debug log
             citiesContainer.classList.add('d-none');
+            
+            // Change back to plus icon
             expandIcon.className = 'fas fa-plus expand-icon text-muted';
             expandIcon.style.transform = 'rotate(0deg)';
         }
@@ -495,8 +521,11 @@ function displayNearbyTree(municipalityData) {
 // Function to load cities for a specific municipality
 async function loadCitiesForMunicipality(municipality, container) {
     try {
-        const res = await fetch(`{{ url('/municipalities') }}/${encodeURIComponent(municipality)}/towns`);
+        console.log('Loading cities for municipality:', municipality); // Debug log
+        const res = await fetch(`/municipalities/${encodeURIComponent(municipality)}/towns`);
         const cities = await res.json();
+        
+        console.log('Cities response:', cities); // Debug log
         
         if (cities.length === 0) {
             container.innerHTML = '<div class="text-muted small py-2">No cities found</div>';

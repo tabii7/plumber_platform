@@ -79,4 +79,26 @@ class AdminWhatsappController extends Controller
             return response()->json(['status' => 'Bot not reachable'], 200);
         }
     }
+
+    /**
+     * Logout from WhatsApp - clears session and disconnects.
+     */
+    public function logout()
+    {
+        try {
+            $res = Http::timeout(10)->post($this->botUrl . '/logout');
+            $data = $res->json();
+            
+            if ($data['success'] ?? false) {
+                return redirect()->route('admin.whatsapp')
+                    ->with('success', 'WhatsApp session logged out successfully. The bot will need to be restarted to reconnect.');
+            } else {
+                return redirect()->route('admin.whatsapp')
+                    ->with('error', 'Failed to logout: ' . ($data['error'] ?? 'Unknown error'));
+            }
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.whatsapp')
+                ->with('error', 'Failed to logout: ' . $e->getMessage());
+        }
+    }
 }

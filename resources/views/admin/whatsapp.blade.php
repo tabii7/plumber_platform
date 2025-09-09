@@ -67,11 +67,19 @@
     <!-- Left: Status/QR or Connected -->
     <div class="col-lg-6 mb-4">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fab fa-whatsapp me-2"></i>
                     Connection Status
                 </h5>
+                <form method="POST" action="{{ route('admin.whatsapp.logout') }}" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger btn-sm" 
+                            onclick="return confirm('Are you sure you want to logout from WhatsApp? This will disconnect the session and require re-authentication.')">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        Logout
+                    </button>
+                </form>
             </div>
             <div class="card-body">
                 <div class="mb-3">
@@ -109,7 +117,29 @@
                         <i class="fas fa-check-circle me-2"></i>
                         <strong>WhatsApp is connected!</strong>
                     </div>
+                    <div class="text-center mt-3">
+                        <form method="POST" action="{{ route('admin.whatsapp.logout') }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-danger" 
+                                    onclick="return confirm('Are you sure you want to logout from WhatsApp? This will disconnect the session and require re-authentication.')">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Logout WhatsApp Session
+                            </button>
+                        </form>
+                    </div>
                 @endif
+
+                <!-- Always visible logout button -->
+                <div class="text-center mt-3">
+                    <form method="POST" action="{{ route('admin.whatsapp.logout') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-danger" 
+                                onclick="return confirm('Are you sure you want to logout from WhatsApp? This will disconnect the session and require re-authentication.')">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Logout WhatsApp
+                        </button>
+                    </form>
+                </div>
 
                 <div class="mt-3">
                     <small class="text-muted">
@@ -194,6 +224,16 @@
                     <div class="col-md-6">
                         <h6>Quick Actions</h6>
                         <div class="d-grid gap-2">
+                            @if($connected)
+                                <form method="POST" action="{{ route('admin.whatsapp.logout') }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100" 
+                                            onclick="return confirm('Are you sure you want to logout from WhatsApp? This will disconnect the session and require re-authentication.')">
+                                        <i class="fas fa-sign-out-alt me-2"></i>
+                                        Logout WhatsApp
+                                    </button>
+                                </form>
+                            @endif
                             <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-tachometer-alt me-2"></i>
                                 Back to Dashboard

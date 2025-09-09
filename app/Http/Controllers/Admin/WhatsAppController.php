@@ -45,4 +45,28 @@ class WhatsAppController extends Controller
             return back()->with('error', 'Failed: '.$e->getMessage());
         }
     }
+
+    /**
+     * Disconnect WhatsApp session - clears session and disconnects.
+     */
+    public function logout()
+    {
+        $base = config('services.whatsapp_bot.url', 'http://127.0.0.1:3000');
+        
+        try {
+            $res = Http::timeout(10)->post($base . '/logout');
+            $data = $res->json();
+            
+            if ($data['success'] ?? false) {
+                return redirect()->route('admin.whatsapp')
+                    ->with('success', 'WhatsApp session disconnected successfully. The bot will need to be restarted to establish a new connection.');
+            } else {
+                return redirect()->route('admin.whatsapp')
+                    ->with('error', 'Failed to disconnect session: ' . ($data['error'] ?? 'Unknown error'));
+            }
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.whatsapp')
+                ->with('error', 'Failed to disconnect session: ' . $e->getMessage());
+        }
+    }
 }

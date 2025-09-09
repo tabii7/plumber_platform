@@ -11,7 +11,9 @@ class WaDefaultSeeder extends Seeder
     public function run(): void
     {
         /**
+         * ===========================
          * Client Flow
+         * ===========================
          */
         $client = WaFlow::updateOrCreate(
             ['code' => 'client_flow'],
@@ -149,7 +151,9 @@ class WaDefaultSeeder extends Seeder
         );
 
         /**
+         * ===========================
          * Plumber Flow
+         * ===========================
          */
         $plumber = WaFlow::updateOrCreate(
             ['code' => 'plumber_flow'],
@@ -195,7 +199,9 @@ class WaDefaultSeeder extends Seeder
         );
 
         /**
+         * ===========================
          * Unregistered
+         * ===========================
          */
         $unregistered = WaFlow::updateOrCreate(
             ['code' => 'unregistered_flow'],
@@ -212,7 +218,9 @@ class WaDefaultSeeder extends Seeder
         );
 
         /**
+         * ===========================
          * Rating Flow
+         * ===========================
          */
         $rating = WaFlow::updateOrCreate(
             ['code' => 'rating_flow'],
