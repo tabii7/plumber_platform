@@ -66,6 +66,9 @@ class PlumberRegistrationController extends Controller
 
         Auth::login($user);
 
+        // Automatically add user's municipality to coverage areas
+        $user->addDefaultMunicipalityCoverage();
+
         // Send welcome notification via email
         try {
             $user->notify(new WelcomeNotification());

@@ -41,6 +41,9 @@ Route::get('/privacy', function () {
 Route::get('/zoek-postcode', [PostcodeController::class, 'zoek'])->name('postcode.search');
 Route::get('/werk-radius', [PostcodeController::class, 'radius'])->name('postcode.radius');
 
+// Address autocomplete API
+Route::get('/api/address/suggest', [AddressController::class, 'suggest'])->name('address.suggest');
+
 
 
 
@@ -116,6 +119,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/municipalities/{name}/towns', [PlumberCoverageController::class, 'municipalityTowns'])->name('municipalities.towns');
     Route::get('/municipalities/nearby',   [PlumberCoverageController::class, 'nearbyMunicipalities'])->name('municipalities.nearby');
     Route::post('/plumber/coverage/bulk',  [PlumberCoverageController::class, 'bulkStore'])->name('plumber.coverage.bulk');
+    Route::post('/plumber/coverage/auto-nearby', [PlumberCoverageController::class, 'autoAddNearby'])->name('plumber.coverage.auto-nearby');
 
 
      Route::get('/plumber/categories', [PlumberCategoryController::class, 'edit'])

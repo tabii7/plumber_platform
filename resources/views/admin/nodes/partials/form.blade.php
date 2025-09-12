@@ -22,84 +22,207 @@
   }
 @endphp
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div>
-    <label class="block text-sm font-medium text-gray-700">Code (unique in flow)</label>
-    <input type="text" name="code" value="{{ old('code', $node->code) }}" class="mt-1 w-full border rounded p-2">
-    @error('code') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+@if ($errors->any())
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <h6 class="alert-heading mb-2">
+      <i class="fas fa-exclamation-triangle me-1"></i>
+      Please fix the following errors:
+    </h6>
+    <ul class="mb-0">
+      @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+      @endforeach
+    </ul>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+@endif
+
+<div class="row">
+  <div class="col-md-6 mb-3">
+    <label for="code" class="form-label">
+      <i class="fas fa-code me-1 text-muted"></i>
+      Code (unique in flow) <span class="text-danger">*</span>
+    </label>
+    <input type="text" 
+           class="form-control @error('code') is-invalid @enderror" 
+           id="code" 
+           name="code" 
+           value="{{ old('code', $node->code) }}" 
+           placeholder="e.g., welcome_message"
+           required>
+    @error('code')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
   </div>
 
-  <div>
-    <label class="block text-sm font-medium text-gray-700">Type</label>
-    <select name="type" id="nodeType" class="mt-1 w-full border rounded p-2">
+  <div class="col-md-6 mb-3">
+    <label for="nodeType" class="form-label">
+      <i class="fas fa-cog me-1 text-muted"></i>
+      Type <span class="text-danger">*</span>
+    </label>
+    <select name="type" 
+            id="nodeType" 
+            class="form-select @error('type') is-invalid @enderror" 
+            required>
       @foreach($types as $k=>$v)
         <option value="{{ $k }}" @selected(old('type',$node->type)===$k)>{{ $v }}</option>
       @endforeach
     </select>
-    @error('type') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+    @error('type')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 mb-3">
+    <label for="title" class="form-label">
+      <i class="fas fa-heading me-1 text-muted"></i>
+      Title (optional)
+    </label>
+    <input type="text" 
+           class="form-control @error('title') is-invalid @enderror" 
+           id="title" 
+           name="title" 
+           value="{{ old('title', $node->title) }}" 
+           placeholder="e.g., Welcome Message">
+    @error('title')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
   </div>
 
-  <div>
-    <label class="block text-sm font-medium text-gray-700">Title (optional)</label>
-    <input type="text" name="title" value="{{ old('title', $node->title) }}" class="mt-1 w-full border rounded p-2">
-    @error('title') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  <div class="col-md-6 mb-3">
+    <label for="sort" class="form-label">
+      <i class="fas fa-sort-numeric-up me-1 text-muted"></i>
+      Sort Order
+    </label>
+    <input type="number" 
+           class="form-control @error('sort') is-invalid @enderror" 
+           id="sort" 
+           name="sort" 
+           value="{{ old('sort', $node->sort ?? 10) }}" 
+           min="1">
+    @error('sort')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+    <div class="form-text">Lower numbers appear first</div>
   </div>
+</div>
 
-  <div class="md:col-span-2">
-    <label class="block text-sm font-medium text-gray-700">Body</label>
-    <textarea name="body" rows="5" class="mt-1 w-full border rounded p-2" placeholder="Message text shown to the user">{{ old('body', $node->body) }}</textarea>
-    @error('body') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+<div class="row">
+  <div class="col-12 mb-3">
+    <label for="body" class="form-label">
+      <i class="fas fa-comment me-1 text-muted"></i>
+      Message Body <span class="text-danger">*</span>
+    </label>
+    <textarea name="body" 
+              id="body"
+              rows="5" 
+              class="form-control @error('body') is-invalid @enderror" 
+              placeholder="Message text shown to the user"
+              required>{{ old('body', $node->body) }}</textarea>
+    @error('body')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
   </div>
+</div>
 
-  <div>
-    <label class="block text-sm font-medium text-gray-700">Footer (optional)</label>
-    <input type="text" name="footer" value="{{ old('footer', $node->footer) }}" class="mt-1 w-full border rounded p-2">
-    @error('footer') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
-  </div>
-
-  <div>
-    <label class="block text-sm font-medium text-gray-700">Sort</label>
-    <input type="number" name="sort" value="{{ old('sort', $node->sort ?? 10) }}" class="mt-1 w-full border rounded p-2">
-    @error('sort') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+<div class="row">
+  <div class="col-12 mb-3">
+    <label for="footer" class="form-label">
+      <i class="fas fa-info-circle me-1 text-muted"></i>
+      Footer (optional)
+    </label>
+    <input type="text" 
+           class="form-control @error('footer') is-invalid @enderror" 
+           id="footer" 
+           name="footer" 
+           value="{{ old('footer', $node->footer) }}" 
+           placeholder="Additional information shown at the bottom">
+    @error('footer')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
   </div>
 </div>
 
 {{-- Options (for buttons/list) --}}
-<div id="optionsBlock" class="mt-6">
-  <div class="flex items-center justify-between">
-    <h3 class="text-sm font-semibold text-gray-900">Options (for buttons/list)</h3>
-    <button type="button" onclick="addOptionRow()" class="text-sm text-blue-600">+ Add option</button>
-  </div>
-  <div id="optionsRows" class="mt-2 space-y-2">
-    @php $count = max(count($opts['id'] ?? []), 1); @endphp
-    @for($i=0; $i<$count; $i++)
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <input name="options[id][]" value="{{ $opts['id'][$i] ?? '' }}" class="border rounded p-2" placeholder="id (key)">
-        <input name="options[label][]" value="{{ $opts['label'][$i] ?? '' }}" class="border rounded p-2" placeholder="Label shown to user">
+<div id="optionsBlock" class="mt-4">
+  <div class="card">
+    <div class="card-header bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-list me-2 text-primary"></i>
+          Options (for buttons/list)
+        </h5>
+        <button type="button" onclick="addOptionRow()" class="btn btn-sm btn-outline-primary">
+          <i class="fas fa-plus me-1"></i> Add Option
+        </button>
       </div>
-    @endfor
+    </div>
+    <div class="card-body">
+      <div id="optionsRows">
+        @php $count = max(count($opts['id'] ?? []), 1); @endphp
+        @for($i=0; $i<$count; $i++)
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <input name="options[id][]" 
+                     value="{{ $opts['id'][$i] ?? '' }}" 
+                     class="form-control" 
+                     placeholder="ID (key)">
+            </div>
+            <div class="col-md-6">
+              <input name="options[label][]" 
+                     value="{{ $opts['label'][$i] ?? '' }}" 
+                     class="form-control" 
+                     placeholder="Label shown to user">
+            </div>
+          </div>
+        @endfor
+      </div>
+    </div>
   </div>
 </div>
 
 {{-- Next map --}}
-<div class="mt-6">
-  <div class="flex items-center justify-between">
-    <h3 class="text-sm font-semibold text-gray-900">Next node routing</h3>
-    <button type="button" onclick="addNextRow()" class="text-sm text-blue-600">+ Add rule</button>
-  </div>
-  <p class="text-xs text-gray-500 mt-1">
-    Map user replies to next node code. For <b>buttons/list</b>, keys usually match option <b>id</b> or the <b>number</b> (1,2,3...).<br>
-    For <b>collect_text</b>, add a rule with key <code>next</code>.
-  </p>
-
-  <div id="nextRows" class="mt-2 space-y-2">
-    @php $ncount = max(count($next['keys'] ?? []), 1); @endphp
-    @for($i=0; $i<$ncount; $i++)
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <input name="next[keys][]" value="{{ $next['keys'][$i] ?? '' }}" class="border rounded p-2" placeholder="reply key (e.g., yes, 1, available, next)">
-        <input name="next[values][]" value="{{ $next['values'][$i] ?? '' }}" class="border rounded p-2" placeholder="next node code">
+<div class="mt-4">
+  <div class="card">
+    <div class="card-header bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-route me-2 text-info"></i>
+          Next Node Routing
+        </h5>
+        <button type="button" onclick="addNextRow()" class="btn btn-sm btn-outline-info">
+          <i class="fas fa-plus me-1"></i> Add Rule
+        </button>
       </div>
-    @endfor
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>How it works:</strong> Map user replies to next node code. For <strong>buttons/list</strong>, keys usually match option <strong>id</strong> or the <strong>number</strong> (1,2,3...). For <strong>collect_text</strong>, add a rule with key <code>next</code>.
+      </div>
+      
+      <div id="nextRows">
+        @php $ncount = max(count($next['keys'] ?? []), 1); @endphp
+        @for($i=0; $i<$ncount; $i++)
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <input name="next[keys][]" 
+                     value="{{ $next['keys'][$i] ?? '' }}" 
+                     class="form-control" 
+                     placeholder="Reply key (e.g., yes, 1, available, next)">
+            </div>
+            <div class="col-md-6">
+              <input name="next[values][]" 
+                     value="{{ $next['values'][$i] ?? '' }}" 
+                     class="form-control" 
+                     placeholder="Next node code">
+            </div>
+          </div>
+        @endfor
+      </div>
+    </div>
   </div>
 </div>
 
@@ -117,10 +240,14 @@
   function addOptionRow() {
     const wrap = document.getElementById('optionsRows');
     const div = document.createElement('div');
-    div.className = 'grid grid-cols-1 md:grid-cols-2 gap-2';
+    div.className = 'row mb-2';
     div.innerHTML = `
-      <input name="options[id][]" class="border rounded p-2" placeholder="id (key)">
-      <input name="options[label][]" class="border rounded p-2" placeholder="Label shown to user">
+      <div class="col-md-6">
+        <input name="options[id][]" class="form-control" placeholder="ID (key)">
+      </div>
+      <div class="col-md-6">
+        <input name="options[label][]" class="form-control" placeholder="Label shown to user">
+      </div>
     `;
     wrap.appendChild(div);
   }
@@ -128,10 +255,14 @@
   function addNextRow() {
     const wrap = document.getElementById('nextRows');
     const div = document.createElement('div');
-    div.className = 'grid grid-cols-1 md:grid-cols-2 gap-2';
+    div.className = 'row mb-2';
     div.innerHTML = `
-      <input name="next[keys][]" class="border rounded p-2" placeholder="reply key (e.g., yes, 1, available, next)">
-      <input name="next[values][]" class="border rounded p-2" placeholder="next node code">
+      <div class="col-md-6">
+        <input name="next[keys][]" class="form-control" placeholder="Reply key (e.g., yes, 1, available, next)">
+      </div>
+      <div class="col-md-6">
+        <input name="next[values][]" class="form-control" placeholder="Next node code">
+      </div>
     `;
     wrap.appendChild(div);
   }

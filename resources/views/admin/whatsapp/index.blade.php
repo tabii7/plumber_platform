@@ -86,11 +86,23 @@
                     <i class="fab fa-whatsapp me-2"></i>
                     Connection Status
                 </h5>
-                <button type="button" class="btn btn-outline-danger btn-sm" 
-                        data-bs-toggle="modal" data-bs-target="#disconnectModal">
-                    <i class="fas fa-unlink me-1"></i>
-                    Disconnect Session
-                </button>
+                @php
+                    $isConnected = isset($status['status']) && in_array($status['status'], ['Connected', 'connected']);
+                @endphp
+                
+                @if($isConnected)
+                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                            data-bs-toggle="modal" data-bs-target="#disconnectModal">
+                        <i class="fas fa-unlink me-1"></i>
+                        Disconnect
+                    </button>
+                @else
+                    <button type="button" class="btn btn-outline-success btn-sm" 
+                            onclick="location.reload()">
+                        <i class="fas fa-sync me-1"></i>
+                        Refresh
+                    </button>
+                @endif
             </div>
             <div class="card-body">
                 <div class="mb-3">
@@ -99,6 +111,7 @@
                         {{ json_encode($status, JSON_PRETTY_PRINT) }}
                     </span>
                 </div>
+                
 
                 @if ($qr)
                     <div class="alert alert-info">
@@ -156,6 +169,8 @@
         </div>
     </div>
 </div>
+
+
 
 <!-- Additional Information -->
 <div class="row">
@@ -215,8 +230,8 @@
         <div class="modal-content">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title" id="disconnectModalLabel">
-                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                    Disconnect WhatsApp Session
+                    <i class="fas fa-unlink text-danger me-2"></i>
+                    Disconnect WhatsApp
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -225,34 +240,35 @@
                     <div class="mx-auto mb-3" style="width: 80px; height: 80px; background: linear-gradient(135deg, #ff6b6b, #ee5a52); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-unlink text-white" style="font-size: 2rem;"></i>
                     </div>
-                    <h6 class="text-dark mb-2">Are you sure you want to disconnect?</h6>
+                    <h6 class="text-dark mb-2">Disconnect and reconnect?</h6>
                     <p class="text-muted mb-0">
-                        This will terminate the current WhatsApp session and require re-authentication. 
-                        All active connections will be lost and you'll need to scan the QR code again.
+                        This will clear all session data and show a new QR code for fresh connection.
                     </p>
-                </div>
-                
-                <div class="alert alert-warning d-flex align-items-center" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <small>
-                        <strong>Note:</strong> After disconnecting, the bot will need to be restarted to establish a new connection.
-                    </small>
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>
                     Cancel
                 </button>
                 <form method="POST" action="{{ route('admin.whatsapp.logout') }}" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-unlink me-2"></i>
-                        Yes, Disconnect Session
+                        Disconnect & Show QR
                     </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+
+<script>
+// Auto-refresh page after successful disconnect or logout to show new QR code
+@if(session('success') && (str_contains(session('success'), 'disconnected') || str_contains(session('success'), 'logged out')))
+    setTimeout(function() {
+        location.reload();
+    }, 2000); // Refresh after 2 seconds
+@endif
+</script>
 @endsection

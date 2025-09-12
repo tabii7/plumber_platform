@@ -8,7 +8,7 @@
     @if(Auth::user()->role === 'admin')
         @include('dashboards.partials.admin-sidebar')
     @elseif(Auth::user()->role === 'plumber')
-        @include('dashboards.partials.plumber-sidebar')
+        <x-plumber-sidebar />
     @else
         @include('dashboards.partials.client-sidebar')
     @endif

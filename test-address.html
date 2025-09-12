@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Address Test</title>
+    <style>
+        .suggest {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .s-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .s-item:hover {
+            background: #f5f5f5;
+        }
+        .s-badge {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        .input-wrap {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Address Autocomplete Test</h1>
+    
+    <div class="input-wrap">
+        <input id="address" placeholder="Start typing address..." autocomplete="off">
+        <div id="suggest" class="suggest"></div>
+    </div>
+    
+    <div>
+        <label>House Number: <input id="number"></label><br><br>
+        <label>Postal Code: <input id="postal_code"></label><br><br>
+        <label>City: <input id="city"></label><br><br>
+        <label>Address JSON: <textarea id="address_json" rows="3" cols="50"></textarea></label>
+    </div>
+
+    <script>
+        const input = document.querySelector('#address');
+        const sugg = document.querySelector('#suggest');
+        const number = document.querySelector('#number');
+        const zip = document.querySelector('#postal_code');
+        const city = document.querySelector('#city');
+        const hidden = document.querySelector('#address_json');
+        
+        let items = [];
+        let activeIndex = -1;
+        let debounceId = null;
+
+        async function fetchJSON(url) {
+            console.log('Fetching:', url);
+            const r = await fetch(url);
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const data = await r.json();
+            console.log('Response:', data);
+            return data;
+        }
+
+        async function searchSmart(qUser) {
+            console.log('Searching for:', qUser);
+            try {
+                const results = await fetchJSON(`/api/address/suggest?q=${encodeURIComponent(qUser)}&c=10`);
+                
+                if (Array.isArray(results) && results.length > 0) {
+                    const hasVLStructure = results.some(item => item.Suggestion || item._vlLoc);
+                    console.log('Results type:', hasVLStructure ? 'VL' : 'OSM');
+                    return {data: results, src: hasVLStructure ? 'vl' : 'osm'};
+                }
+                
+                return {data: [], src: 'vl'};
+            } catch(e) {
+                console.error('Address search error:', e);
+                return {data: [], src: 'vl'};
+            }
+        }
+
+        function escapeHtml(s) { 
+            return (s || '').replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); 
+        }
+
+        function renderList(list, src) {
+            console.log('Rendering list:', list, 'src:', src);
+            if (!list || !list.length) {
+                sugg.innerHTML = `<div class="s-item"><span class="s-badge">Ø</span>No results found</div>`;
+                sugg.style.display = 'block';
+                return;
+            }
+            
+            sugg.innerHTML = list.map((it, i) => {
+                const label = (src === 'vl') ? (it?.Suggestion?.Label || '') : (it?.display_name || '');
+                const b = (src === 'vl') ? 'VL' : 'OSM';
+                return `<div class="s-item${i === activeIndex ? ' active' : ''}" data-i="${i}" data-src="${b}">
+                    <span class="s-badge">[${b}]</span>
+                    <span class="s-label">${escapeHtml(label)}</span>
+                </div>`;
+            }).join('');
+            
+            sugg.style.display = 'block';
+            sugg.querySelectorAll('.s-item').forEach(el => {
+                el.addEventListener('mousedown', () => choose(parseInt(el.dataset.i, 10), el.dataset.src));
+            });
+        }
+
+        async function choose(i, srcBadge) {
+            console.log('Choosing item:', i, 'src:', srcBadge);
+            if (i < 0 || i >= items.length) return;
+            const src = (srcBadge === 'VL') ? 'vl' : 'osm';
+
+            const label = (src === 'vl')
+                ? (items[i]?.Suggestion?.Label || '')
+                : (items[i]?.display_name || '');
+
+            input.value = label;
+            sugg.style.display = 'none';
+
+            try {
+                if (src === 'vl') {
+                    if (items[i] && items[i]._vlLoc) {
+                        showVL(items[i]._vlLoc.Location, items[i]._vlLoc);
+                    } else {
+                        showVL(items[i]?.Location || null, items[i]);
+                    }
+                } else {
+                    showOSM(items[i]);
+                }
+            } catch(e) {
+                console.error('Error fetching details:', e);
+            }
+        }
+
+        function showVL(L, rawArr) {
+            console.log('Showing VL data:', L);
+            if (L) {
+                const streetName = L.Thoroughfarename || '';
+                const houseNumber = L.Housenumber || '';
+                const postalCode = L.Postalcode || '';
+                const municipality = L.Municipality || '';
+                
+                input.value = [streetName, houseNumber].filter(Boolean).join(' ');
+                number.value = houseNumber;
+                zip.value = postalCode;
+                city.value = municipality;
+                
+                hidden.value = JSON.stringify({
+                    source: 'vl',
+                    location: L,
+                    raw: rawArr
+                }, null, 2);
+            }
+        }
+
+        function showOSM(it) {
+            console.log('Showing OSM data:', it);
+            const addr = it?.address || {};
+            const streetName = addr.road || addr.pedestrian || addr.path || '';
+            const houseNumber = addr.house_number || '';
+            const postalCode = addr.postcode || '';
+            const cityName = addr.city || addr.town || addr.village || addr.municipality || '';
+            
+            input.value = [streetName, houseNumber].filter(Boolean).join(' ');
+            number.value = houseNumber;
+            zip.value = postalCode;
+            city.value = cityName;
+            
+            hidden.value = JSON.stringify({
+                source: 'osm',
+                address: it
+            }, null, 2);
+        }
+
+        // Input event with debouncing
+        input.addEventListener('input', () => {
+            const q = input.value.trim();
+            activeIndex = -1;
+            if (debounceId) clearTimeout(debounceId);
+            if (q.length < 2) { 
+                sugg.style.display = 'none'; 
+                return; 
+            }
+
+            debounceId = setTimeout(async () => {
+                try {
+                    const {data, src} = await searchSmart(q);
+                    items = data || [];
+                    renderList(items, src);
+                } catch(e) {
+                    items = [];
+                    sugg.innerHTML = `<div class="s-item"><span class="s-badge">ERR</span>Error: ${escapeHtml(e.message)}</div>`;
+                    sugg.style.display = 'block';
+                }
+            }, 350);
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', e => {
+            if (sugg.style.display === 'none') return;
+            const max = items.length - 1;
+            
+            if (e.key === 'ArrowDown') { 
+                e.preventDefault(); 
+                activeIndex = Math.min(activeIndex + 1, max);
+                rerenderActive();
+            }
+            if (e.key === 'ArrowUp') { 
+                e.preventDefault(); 
+                activeIndex = Math.max(activeIndex - 1, 0);
+                rerenderActive();
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const firstBadge = sugg.querySelector('.s-item')?.dataset.src || 'VL';
+                choose(activeIndex >= 0 ? activeIndex : 0, firstBadge);
+            }
+            if (e.key === 'Escape') { 
+                sugg.style.display = 'none'; 
+            }
+        });
+
+        function rerenderActive() {
+            const nodes = [...sugg.querySelectorAll('.s-item')];
+            nodes.forEach((n, i) => n.classList.toggle('active', i === activeIndex));
+        }
+    </script>
+</body>
+</html>

@@ -5,54 +5,7 @@
 @section('page-title', 'Coverage Areas')
 
 @section('sidebar-nav')
-    <div class="nav-item">
-        <a href="{{ route('plumber.dashboard') }}" class="nav-link">
-            <i class="fas fa-tachometer-alt"></i>
-            <span>Dashboard</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('plumber.coverage.index') }}" class="nav-link active">
-            <i class="fas fa-map-marker-alt"></i>
-            <span>Coverage Areas</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('plumber.schedule.index') }}" class="nav-link">
-            <i class="fas fa-clock"></i>
-            <span>Schedule</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('plumber.categories.edit') }}" class="nav-link">
-            <i class="fas fa-tools"></i>
-            <span>Service Categories</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('requests.index') }}" class="nav-link">
-            <i class="fas fa-list-alt"></i>
-            <span>Service Requests</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('support') }}" class="nav-link">
-            <i class="fas fa-headset"></i>
-            <span>Support</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('profile.edit') }}" class="nav-link">
-            <i class="fas fa-user-cog"></i>
-            <span>Profile</span>
-        </a>
-    </div>
+    <x-plumber-sidebar />
 @endsection
 
 @section('content')
@@ -175,23 +128,50 @@ const radiusSelector = document.getElementById('radius-selector');
 const refreshBtn = document.getElementById('refresh-nearby');
 
 let selectedNearbyMunicipalities = new Set();
+let selectedCities = new Set(); // Track individual cities selected
 
 
 
 // Select all functionality
-selectAllBtn.addEventListener('click', () => {
+selectAllBtn.addEventListener('click', async () => {
     const checkboxes = nearbyTree.querySelectorAll('input[type="checkbox"]:not(:disabled)');
-    checkboxes.forEach(checkbox => {
+    
+    for (const checkbox of checkboxes) {
         checkbox.checked = true;
-        selectedNearbyMunicipalities.add(checkbox.dataset.municipality);
-    });
+        const municipality = checkbox.dataset.municipality;
+        const type = checkbox.dataset.type;
+        
+        if (type === 'municipality') {
+            selectedNearbyMunicipalities.add(municipality);
+            
+            // Load cities for this municipality if not already loaded
+            const citiesContainer = checkbox.closest('.municipality-item').querySelector('.cities-container');
+            if (citiesContainer && citiesContainer.classList.contains('d-none')) {
+                // Cities not loaded yet, load them first
+                citiesContainer.classList.remove('d-none');
+                const expandIcon = checkbox.closest('.municipality-item').querySelector('.expand-area i');
+                expandIcon.className = 'fas fa-minus expand-icon text-muted';
+                await loadCitiesForMunicipality(municipality, citiesContainer);
+            }
+            
+            // Also select all cities in this municipality
+            if (citiesContainer) {
+                citiesContainer.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach(cityCheckbox => {
+                    cityCheckbox.checked = true;
+                    selectedCities.add(cityCheckbox.dataset.municipality);
+                });
+            }
+        } else {
+            selectedCities.add(municipality);
+        }
+    }
     updateAddButton();
 });
 
 // Add selected municipalities
 addSelectedBtn.addEventListener('click', async () => {
-    if (selectedNearbyMunicipalities.size === 0) {
-        alert('Please select at least one municipality.');
+    if (selectedNearbyMunicipalities.size === 0 && selectedCities.size === 0) {
+        alert('Please select at least one municipality or city.');
         return;
     }
 
@@ -206,7 +186,8 @@ addSelectedBtn.addEventListener('click', async () => {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({
-                municipalities: Array.from(selectedNearbyMunicipalities)
+                municipalities: Array.from(selectedNearbyMunicipalities),
+                cities: Array.from(selectedCities)
             })
         });
 
@@ -234,6 +215,7 @@ addSelectedBtn.addEventListener('click', async () => {
 
             // Clear selections
             selectedNearbyMunicipalities.clear();
+            selectedCities.clear();
             nearbyTree.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                 checkbox.checked = false;
             });
@@ -256,8 +238,9 @@ addSelectedBtn.addEventListener('click', async () => {
 });
 
 function updateAddButton() {
-    addSelectedBtn.textContent = `Add Selected (${selectedNearbyMunicipalities.size})`;
-    addSelectedBtn.disabled = selectedNearbyMunicipalities.size === 0;
+    const totalSelected = selectedNearbyMunicipalities.size + selectedCities.size;
+    addSelectedBtn.textContent = `Add Selected (${totalSelected})`;
+    addSelectedBtn.disabled = totalSelected === 0;
 }
 
 
@@ -392,6 +375,7 @@ function displayNearbyTree(municipalityData) {
     });
     
     selectedNearbyMunicipalities.clear();
+    selectedCities.clear();
     
     // Sort by distance
     municipalityData.sort((a, b) => a.distance - b.distance);
@@ -479,7 +463,7 @@ function displayNearbyTree(municipalityData) {
     
     // Wire checkbox events
     nearbyTree.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
+        checkbox.addEventListener('change', async () => {
             const municipality = checkbox.dataset.municipality;
             const type = checkbox.dataset.type;
             
@@ -487,28 +471,40 @@ function displayNearbyTree(municipalityData) {
                 if (type === 'municipality') {
                     // Select municipality and all its cities
                     selectedNearbyMunicipalities.add(municipality);
-                    // Also select all cities in this municipality
+                    
+                    // Load cities for this municipality if not already loaded
                     const citiesContainer = checkbox.closest('.municipality-item').querySelector('.cities-container');
-                    citiesContainer.querySelectorAll('input[type="checkbox"]').forEach(cityCheckbox => {
-                        if (!cityCheckbox.disabled) {
+                    if (citiesContainer && citiesContainer.classList.contains('d-none')) {
+                        // Cities not loaded yet, load them first
+                        citiesContainer.classList.remove('d-none');
+                        const expandIcon = checkbox.closest('.municipality-item').querySelector('.expand-area i');
+                        expandIcon.className = 'fas fa-minus expand-icon text-muted';
+                        await loadCitiesForMunicipality(municipality, citiesContainer);
+                    }
+                    
+                    // Now select all cities in this municipality
+                    if (citiesContainer) {
+                        citiesContainer.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach(cityCheckbox => {
                             cityCheckbox.checked = true;
-                            selectedNearbyMunicipalities.add(cityCheckbox.dataset.municipality);
-                        }
-                    });
+                            selectedCities.add(cityCheckbox.dataset.municipality);
+                        });
+                    }
                 } else {
-                    selectedNearbyMunicipalities.add(municipality);
+                    selectedCities.add(municipality);
                 }
             } else {
                 if (type === 'municipality') {
                     // Deselect municipality and all its cities
                     selectedNearbyMunicipalities.delete(municipality);
                     const citiesContainer = checkbox.closest('.municipality-item').querySelector('.cities-container');
-                    citiesContainer.querySelectorAll('input[type="checkbox"]').forEach(cityCheckbox => {
-                        cityCheckbox.checked = false;
-                        selectedNearbyMunicipalities.delete(cityCheckbox.dataset.municipality);
-                    });
+                    if (citiesContainer) {
+                        citiesContainer.querySelectorAll('input[type="checkbox"]').forEach(cityCheckbox => {
+                            cityCheckbox.checked = false;
+                            selectedCities.delete(cityCheckbox.dataset.municipality);
+                        });
+                    }
                 } else {
-                    selectedNearbyMunicipalities.delete(municipality);
+                    selectedCities.delete(municipality);
                 }
             }
             updateAddButton();
@@ -567,9 +563,9 @@ async function loadCitiesForMunicipality(municipality, container) {
                 const cityMunicipality = checkbox.dataset.municipality;
                 
                 if (checkbox.checked && !checkbox.disabled) {
-                    selectedNearbyMunicipalities.add(cityMunicipality);
+                    selectedCities.add(cityMunicipality);
                 } else {
-                    selectedNearbyMunicipalities.delete(cityMunicipality);
+                    selectedCities.delete(cityMunicipality);
                 }
                 updateAddButton();
             });

@@ -34,7 +34,7 @@ class RegisterController extends Controller
             'btw_number'       => 'nullable|string|max:50',
         ]);
 
-        $user = User::create([
+        $userData = [
             'full_name'       => $validated['full_name'],
             'company_name'    => $validated['company_name'] ?? null,
             'whatsapp_number' => $validated['whatsapp_number'],
@@ -48,7 +48,16 @@ class RegisterController extends Controller
             'role'            => $validated['role'],
             'btw_number'      => $validated['btw_number'] ?? null,
             'address_json'    => $validated['address_json'] ?? null,
-        ]);
+        ];
+
+        // Add default yearly subscription for clients
+        if ($validated['role'] === 'client') {
+            $userData['subscription_plan'] = 'client_yearly';
+            $userData['subscription_status'] = 'active';
+            $userData['subscription_ends_at'] = now()->addYear();
+        }
+
+        $user = User::create($userData);
 
         Auth::login($user);
 

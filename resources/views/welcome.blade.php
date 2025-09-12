@@ -26,6 +26,19 @@
             line-height: 1.6;
             color: #333;
             transition: background-color 0.3s ease, color 0.3s ease;
+            scroll-behavior: smooth;
+        }
+        
+        /* Ensure page starts at top on mobile */
+        html, body {
+            scroll-behavior: auto !important;
+        }
+        
+        /* Prevent auto-scroll to hidden elements */
+        .login-form-container[style*="display: none"] {
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
         }
         
         /* Dark mode styles */
@@ -1082,20 +1095,20 @@
                 font-size: 0.8rem;
             }
             
-            /* Login form */
+            /* Login form - Hide by default on mobile */
             .login-form-container {
                 min-height: auto;
                 padding: 1rem 0;
-                display: flex !important;
-                visibility: visible !important;
+                display: none !important;
+                visibility: hidden !important;
             }
             
             .login-form {
                 margin: 0.5rem;
                 padding: 1.5rem;
                 max-width: 100%;
-                display: block !important;
-                visibility: visible !important;
+                display: none !important;
+                visibility: hidden !important;
             }
             
             .login-title {
@@ -1385,6 +1398,8 @@
             
             .login-form {
                 padding: 0.8rem;
+                display: none !important;
+                visibility: hidden !important;
             }
             
             .login-title {
@@ -1440,6 +1455,9 @@
 
                     @guest
                         <li class="nav-item d-block d-lg-none">
+                            <button onclick="toggleMobileLogin()" class="btn btn-outline-secondary w-100 mb-2">Login</button>
+                        </li>
+                        <li class="nav-item d-block d-lg-none">
                             <a href="/client/register" class="btn btn-primary w-100">Get Started</a>
                         </li>
                         <li class="nav-item d-none d-lg-block">
@@ -1482,7 +1500,7 @@
                         <div class="d-flex flex-wrap gap-3 mb-4">
                             @guest
                                 <a href="#pricing" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-crown me-2"></i>View Pricing Plans
+                                    <i class="fas fa-crown me-2"></i>100% Free beta access now
                                 </a>
                                 <a href="/client/register" class="btn btn-outline btn-lg">
                                     <i class="fas fa-user-plus me-2"></i>Join to hire a Plumber
@@ -1547,7 +1565,7 @@
                                         <div class="input-group">
                                             <i class="fas fa-envelope input-icon"></i>
                                             <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" 
-                                                   name="email"  required autocomplete="email" placeholder="Enter your email address" autofocus>
+                                                   name="email"  required autocomplete="email" placeholder="Enter your email address">
                                         </div>
                                         @error('email')
                                             <span class="invalid-feedback" role="alert">
@@ -2058,8 +2076,50 @@
             }
         }
         
+        // Toggle mobile login form
+        function toggleMobileLogin() {
+            const loginContainer = document.querySelector('.login-form-container');
+            const loginForm = document.querySelector('.login-form');
+            
+            if (loginContainer && loginForm) {
+                const isVisible = loginContainer.style.display === 'flex';
+                
+                if (isVisible) {
+                    // Hide login form
+                    loginContainer.style.display = 'none';
+                    loginContainer.style.visibility = 'hidden';
+                    loginForm.style.display = 'none';
+                    loginForm.style.visibility = 'hidden';
+                } else {
+                    // Show login form
+                    loginContainer.style.display = 'flex';
+                    loginContainer.style.visibility = 'visible';
+                    loginForm.style.display = 'block';
+                    loginForm.style.visibility = 'visible';
+                    
+                    // Focus on email input after a short delay
+                    setTimeout(() => {
+                        const emailInput = document.getElementById('email');
+                        if (emailInput) {
+                            emailInput.focus();
+                        }
+                    }, 100);
+                    
+                    // Scroll to login form
+                    loginContainer.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        }
+        
         // Initialize dark mode on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Ensure page starts at top on mobile
+            if (window.innerWidth <= 768) {
+                window.scrollTo(0, 0);
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }
+            
             // Initialize dark mode state from localStorage
             const savedDarkMode = localStorage.getItem('darkMode');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -2098,6 +2158,18 @@
                         console.log('Fallback dark mode toggled to:', !isDark ? 'dark' : 'light');
                     });
                 }
+            }
+        });
+        
+        // Additional check on window load to prevent auto-scroll
+        window.addEventListener('load', function() {
+            if (window.innerWidth <= 768) {
+                // Force scroll to top on mobile
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                }, 100);
             }
         });
     </script>

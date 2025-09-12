@@ -386,42 +386,21 @@
       }
 
       async function searchSmart(qUser) {
-        // 1) Try Vlaanderen Suggestion with normalized query
-        const qVL = normalizeForVL(qUser);
-        let vlS = [];
+        // Use our unified address API
         try {
-          vlS = await fetchJSON(`/api/address/search-vlaanderen?q=${encodeURIComponent(qVL)}&c=10`);
-        } catch(e) {}
-
-        if (Array.isArray(vlS) && vlS.length) return {data: vlS, src: 'vl'};
-
-        // 2) Try Vlaanderen Location as fallback
-        let vlL = [];
-        try {
-          vlL = await fetchJSON(`/api/address/search-vlaanderen-location?q=${encodeURIComponent(qVL)}`);
-        } catch(e) {}
-        
-        if (Array.isArray(vlL) && vlL.length) {
-          // Convert to suggestion format for display
-          const mapped = vlL.map(x => {
-            const location = x.Location || {};
-            const line1 = [location.Thoroughfarename, location.Housenumber].filter(Boolean).join(' ');
-            const line2 = [location.Postalcode, location.Municipality].filter(Boolean).join(' ');
-            const parts = [];
-            if (line1) parts.push(line1);
-            if (line2) parts.push(line2);
-            const label = parts.join(', ');
-            return {
-              Suggestion: {Label: label}, 
-              _vlLoc: x
-            };
-          });
-          return {data: mapped, src: 'vl'};
+          const results = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(qUser)}&c=10`);
+          
+          if (Array.isArray(results) && results.length > 0) {
+            // Check if results are from VL or OSM based on structure
+            const hasVLStructure = results.some(item => item.Suggestion || item._vlLoc);
+            return {data: results, src: hasVLStructure ? 'vl' : 'osm'};
+          }
+          
+          return {data: [], src: 'vl'};
+        } catch(e) {
+          console.error('Address search error:', e);
+          return {data: [], src: 'vl'};
         }
-
-        // 3) Fallback to OSM (covers all Belgium, tolerant for order)
-        const osm = await fetchJSON(`/api/address/search-osm?q=${encodeURIComponent(qUser)}`);
-        return {data: osm, src: 'osm'};
       }
 
       function escapeHtml(s) { 
@@ -463,12 +442,26 @@
 
         try {
           if (src === 'vl') {
-            // Get detailed Location data
-            if (items[i] && items[i]._vlLoc) {
-              showVL(items[i]._vlLoc);
+            // Check if we have enhanced OSM data
+            if (items[i] && items[i]._osmData) {
+              showOSM(items[i]._osmData);
+            } else if (items[i] && items[i]._vlLoc) {
+              showVL(items[i]._vlLoc.Location, items[i]._vlLoc);
             } else {
-              const loc = await fetchJSON(`/api/address/search-vlaanderen-location?q=${encodeURIComponent(label)}`);
-              showVL(loc[0]?.Location || null, loc);
+              // For VL suggestions, we need to fetch detailed location data
+              const detailedResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&detailed=1`);
+              if (detailedResults && detailedResults.length > 0 && detailedResults[0]._vlLoc) {
+                showVL(detailedResults[0]._vlLoc.Location, detailedResults[0]._vlLoc);
+              } else {
+                // Try OSM for better city information
+                const osmResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&osm=1`);
+                if (osmResults && osmResults.length > 0) {
+                  showOSM(osmResults[0]);
+                } else {
+                  // Fallback: try to parse the label manually
+                  showVLFromLabel(label);
+                }
+              }
             }
           } else {
             // OSM data
@@ -507,7 +500,8 @@
         const streetName = addr.road || addr.pedestrian || addr.path || '';
         const houseNumber = addr.house_number || '';
         const postalCode = addr.postcode || '';
-        const cityName = addr.city || addr.town || addr.village || addr.municipality || '';
+        // Prioritize village over town over city over municipality for correct city name
+        const cityName = addr.village || addr.town || addr.city || addr.municipality || '';
         
         // Fill form fields
         input.value = [streetName, houseNumber].filter(Boolean).join(' ');
@@ -520,6 +514,43 @@
           source: 'osm',
           address: it
         });
+      }
+
+      function showVLFromLabel(label) {
+        // Parse the label manually: "Polderhoek 8, 8300 Knokke-Heist"
+        const parts = label.split(', ');
+        if (parts.length >= 2) {
+          const streetPart = parts[0].trim(); // "Polderhoek 8"
+          const cityPart = parts[1].trim(); // "8300 Knokke-Heist"
+          
+          // Extract house number from street part
+          const streetMatch = streetPart.match(/^(.+?)\s+(\d+.*)$/);
+          const streetName = streetMatch ? streetMatch[1] : streetPart;
+          const houseNumber = streetMatch ? streetMatch[2] : '';
+          
+          // Extract postal code and city from city part
+          const cityMatch = cityPart.match(/^(\d+)\s+(.+)$/);
+          const postalCode = cityMatch ? cityMatch[1] : '';
+          const cityName = cityMatch ? cityMatch[2] : cityPart;
+          
+          // Fill form fields
+          input.value = [streetName, houseNumber].filter(Boolean).join(' ');
+          number.value = houseNumber;
+          zip.value = postalCode;
+          city.value = cityName;
+          
+          // Store parsed data
+          hidden.value = JSON.stringify({
+            source: 'vl_parsed',
+            label: label,
+            parsed: {
+              streetName,
+              houseNumber,
+              postalCode,
+              cityName
+            }
+          });
+        }
       }
 
       // Input event with debouncing

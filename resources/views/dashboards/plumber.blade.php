@@ -5,47 +5,7 @@
 @section('page-title', 'Plumber Dashboard')
 
 @section('sidebar-nav')
-    <div class="nav-item">
-        <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-            <i class="fas fa-tachometer-alt"></i>
-            <span>Dashboard</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('plumber.coverage.index') }}" class="nav-link {{ request()->routeIs('plumber.coverage.*') ? 'active' : '' }}">
-            <i class="fas fa-map-marker-alt"></i>
-            <span>Coverage Areas</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('plumber.schedule.index') }}" class="nav-link {{ request()->routeIs('plumber.schedule.*') ? 'active' : '' }}">
-            <i class="fas fa-clock"></i>
-            <span>Schedule</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('requests.index') }}" class="nav-link {{ request()->routeIs('requests.*') ? 'active' : '' }}">
-            <i class="fas fa-tools"></i>
-            <span>My Requests</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('support') }}" class="nav-link">
-            <i class="fas fa-headset"></i>
-            <span>Support</span>
-        </a>
-    </div>
-    
-    <div class="nav-item">
-        <a href="{{ route('profile.edit') }}" class="nav-link">
-            <i class="fas fa-user-cog"></i>
-            <span>Profile</span>
-        </a>
-    </div>
+    <x-plumber-sidebar />
 @endsection
 
 @section('content')
@@ -146,6 +106,27 @@
                     </a>
                 </div>
                 <div class="card-body">
+                    <!-- User's Own Address -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-home me-3" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <h6 class="mb-1">Your Address</h6>
+                                        <p class="mb-0">
+                                            @if(Auth::user()->address && Auth::user()->city)
+                                                {{ Auth::user()->address }}{{ Auth::user()->number ? ', ' . Auth::user()->number : '' }}, {{ Auth::user()->postal_code }} {{ Auth::user()->city }}
+                                            @else
+                                                <span class="text-muted">Address not set - <a href="{{ route('profile.edit') }}">Update your profile</a></span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     @if(Auth::user()->coverages->count() > 0)
                         <div class="row">
                             @foreach(Auth::user()->coverages->take(6) as $coverage)
@@ -159,7 +140,13 @@
                                             @if($coverage->coverage_type === 'city')
                                                 <small class="text-muted">{{ $coverage->city }}</small>
                                             @else
-                                                <small class="text-muted">Entire municipality</small>
+                                                <small class="text-muted">
+                                                    @if($coverage->coverage_type === 'municipality')
+                                                        <i class="fas fa-home me-1"></i>Your municipality
+                                                    @else
+                                                        Entire municipality
+                                                    @endif
+                                                </small>
                                             @endif
                                         </div>
                                     </div>
@@ -174,6 +161,29 @@
                             </div>
                         @endif
                     @else
+                        <!-- Default 5km Nearby Area Suggestion -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-lightbulb me-3" style="font-size: 1.5rem;"></i>
+                                        <div>
+                                            <h6 class="mb-1">Suggested Coverage Area</h6>
+                                            <p class="mb-2">Based on your address, we suggest covering a 5km radius around your location to maximize job opportunities.</p>
+                                            @if(Auth::user()->city)
+                                                <button id="autoAddNearbyBtn" class="btn btn-warning btn-sm">
+                                                    <i class="fas fa-magic me-2"></i>
+                                                    Auto-Add 5km Nearby Areas
+                                                </button>
+                                            @else
+                                                <small class="text-muted">Complete your address in <a href="{{ route('profile.edit') }}">profile settings</a> to get suggestions</small>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="text-center py-4">
                             <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">No coverage areas set</h6>
@@ -263,3 +273,82 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const autoAddBtn = document.getElementById('autoAddNearbyBtn');
+    
+    if (autoAddBtn) {
+        autoAddBtn.addEventListener('click', async function() {
+            if (autoAddBtn.disabled) return;
+            
+            try {
+                autoAddBtn.disabled = true;
+                autoAddBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+                
+                const response = await fetch('{{ route("plumber.coverage.auto-nearby") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        ${result.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    // Insert at the top of the coverage card
+                    const coverageCard = document.querySelector('.card .card-body');
+                    if (coverageCard) {
+                        coverageCard.insertBefore(alertDiv, coverageCard.firstChild);
+                    }
+                    
+                    // Remove the suggestion section since coverage is now added
+                    const suggestionSection = document.querySelector('.alert-warning');
+                    if (suggestionSection) {
+                        suggestionSection.remove();
+                    }
+                    
+                    // Reload the page to show updated coverage
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                } else {
+                    // Show error message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${result.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    const coverageCard = document.querySelector('.card .card-body');
+                    if (coverageCard) {
+                        coverageCard.insertBefore(alertDiv, coverageCard.firstChild);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while adding nearby areas. Please try again.');
+            } finally {
+                autoAddBtn.disabled = false;
+                autoAddBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Auto-Add 5km Nearby Areas';
+            }
+        });
+    }
+});
+</script>
+@endpush

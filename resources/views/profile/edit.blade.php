@@ -55,37 +55,7 @@
             </a>
         </div>
     @elseif(Auth::user()->role === 'plumber')
-        <div class="nav-item">
-            <a href="{{ route('plumber.dashboard') }}" class="nav-link">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{{ route('plumber.coverage.index') }}" class="nav-link">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Coverage Areas</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{{ route('plumber.schedule.index') }}" class="nav-link">
-                <i class="fas fa-clock"></i>
-                <span>Schedule</span>
-            </a>
-        </div>
-
-        <div class="nav-item">
-            <a href="{{ route('support') }}" class="nav-link">
-                <i class="fas fa-headset"></i>
-                <span>Support</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{{ route('profile.edit') }}" class="nav-link active">
-                <i class="fas fa-user-cog"></i>
-                <span>Profile</span>
-            </a>
-        </div>
+        <x-plumber-sidebar />
     @else
         <div class="nav-item">
             <a href="{{ route('dashboard') }}" class="nav-link">

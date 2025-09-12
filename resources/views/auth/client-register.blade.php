@@ -473,51 +473,23 @@
       async function searchSmart(qUser) {
         console.log('searchSmart called with:', qUser); // Debug log
         
-        // 1) Probeer Vlaanderen Suggestion op genormaliseerde query
-        const qVL = normalizeForVL(qUser);
-        console.log('Normalized query:', qVL); // Debug log
-        let vlS = [];
+        // Use our unified address API
         try {
-          const vlUrl = `https://geo.api.vlaanderen.be/geolocation/v4/Suggestion?q=${encodeURIComponent(qVL)}&c=10`;
-          console.log('Trying Vlaanderen Suggestion API:', vlUrl); // Debug log
-          vlS = await fetchJSON(vlUrl);
-          console.log('Vlaanderen Suggestion result:', vlS); // Debug log
+          const results = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(qUser)}&c=10`);
+          console.log('Address API result:', results); // Debug log
+          
+          if (Array.isArray(results) && results.length > 0) {
+            // Check if results are from VL or OSM based on structure
+            const hasVLStructure = results.some(item => item.Suggestion || item._vlLoc);
+            console.log('Using results from:', hasVLStructure ? 'VL' : 'OSM'); // Debug log
+            return {data: results, src: hasVLStructure ? 'vl' : 'osm'};
+          }
+          
+          console.log('No results found'); // Debug log
+          return {data: [], src: 'vl'};
         } catch(e) {
-          console.log('Vlaanderen Suggestion API error:', e.message); // Debug log
-        }
-
-        if (Array.isArray(vlS) && vlS.length) {
-          console.log('Using Vlaanderen Suggestion results'); // Debug log
-          return {data:vlS, src:'vl'};
-        }
-
-        // 2) Probeer Vlaanderen Location direct (soms vindt dit wel wat Suggestion mist)
-        let vlL = [];
-        try {
-          const vlLocUrl = `https://geo.api.vlaanderen.be/geolocation/v4/Location?q=${encodeURIComponent(qVL)}`;
-          console.log('Trying Vlaanderen Location API:', vlLocUrl); // Debug log
-          vlL = await fetchJSON(vlLocUrl);
-          console.log('Vlaanderen Location result:', vlL); // Debug log
-        } catch(e) {
-          console.log('Vlaanderen Location API error:', e.message); // Debug log
-        }
-        if (Array.isArray(vlL) && vlL.length) {
-          console.log('Using Vlaanderen Location results'); // Debug log
-          // giet om naar Suggestion-achtig formaat voor weergave
-          const mapped = vlL.map(x=>({Suggestion:{Label: formatVLLabelFromLocation(x.Location||{})}, _vlLoc:x}));
-          return {data:mapped, src:'vl'};
-        }
-
-        // 3) Fallback OSM (heel België, tolerant voor volgorde)
-        try {
-          const osmUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&countrycodes=be&addressdetails=1&accept-language=nl&q=${encodeURIComponent(qUser)}`;
-          console.log('Trying OSM API:', osmUrl); // Debug log
-          const osm = await fetchJSON(osmUrl);
-          console.log('OSM result:', osm); // Debug log
-          return {data:osm, src:'osm'};
-        } catch(e) {
-          console.log('OSM API error:', e.message); // Debug log
-          throw e;
+          console.error('Address search error:', e);
+          return {data: [], src: 'vl'};
         }
       }
 
@@ -560,12 +532,26 @@
 
         try{
           if (src==='vl'){
-            // Haal echte Location data op (ook als item uit vl_loc-mapping kwam)
-            if (items[i] && items[i]._vlLoc){
-              showVL(items[i]._vlLoc);
+            // Check if we have enhanced OSM data
+            if (items[i] && items[i]._osmData) {
+              showOSM(items[i]._osmData);
+            } else if (items[i] && items[i]._vlLoc){
+              showVL(items[i]._vlLoc.Location, items[i]._vlLoc);
             } else {
-              const loc = await fetchJSON(`https://geo.api.vlaanderen.be/geolocation/v4/Location?q=${encodeURIComponent(label)}`);
-              showVL(loc[0]?.Location || null, loc);
+              // For VL suggestions, we need to fetch detailed location data
+              const detailedResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&detailed=1`);
+              if (detailedResults && detailedResults.length > 0 && detailedResults[0]._vlLoc) {
+                showVL(detailedResults[0]._vlLoc.Location, detailedResults[0]._vlLoc);
+              } else {
+                // Try OSM for better city information
+                const osmResults = await fetchJSON(`{{ route('address.suggest') }}?q=${encodeURIComponent(label)}&osm=1`);
+                if (osmResults && osmResults.length > 0) {
+                  showOSM(osmResults[0]);
+                } else {
+                  // Fallback: try to parse the label manually
+                  showVLFromLabel(label);
+                }
+              }
             }
           } else {
             // OSM direct tonen + compacte samenvatting
@@ -604,7 +590,8 @@
         const streetName = addr.road || addr.pedestrian || addr.path || '';
         const houseNumber = addr.house_number || '';
         const postalCode = addr.postcode || '';
-        const cityName = addr.city || addr.town || addr.village || addr.municipality || '';
+        // Prioritize village over town over city over municipality for correct city name
+        const cityName = addr.village || addr.town || addr.city || addr.municipality || '';
         
         // Fill form fields
         input.value = [streetName, houseNumber].filter(Boolean).join(' ');
@@ -617,6 +604,43 @@
           source: 'osm',
           address: it
         });
+      }
+
+      function showVLFromLabel(label) {
+        // Parse the label manually: "Polderhoek 8, 8300 Knokke-Heist"
+        const parts = label.split(', ');
+        if (parts.length >= 2) {
+          const streetPart = parts[0].trim(); // "Polderhoek 8"
+          const cityPart = parts[1].trim(); // "8300 Knokke-Heist"
+          
+          // Extract house number from street part
+          const streetMatch = streetPart.match(/^(.+?)\s+(\d+.*)$/);
+          const streetName = streetMatch ? streetMatch[1] : streetPart;
+          const houseNumber = streetMatch ? streetMatch[2] : '';
+          
+          // Extract postal code and city from city part
+          const cityMatch = cityPart.match(/^(\d+)\s+(.+)$/);
+          const postalCode = cityMatch ? cityMatch[1] : '';
+          const cityName = cityMatch ? cityMatch[2] : cityPart;
+          
+          // Fill form fields
+          input.value = [streetName, houseNumber].filter(Boolean).join(' ');
+          number.value = houseNumber;
+          zip.value = postalCode;
+          city.value = cityName;
+          
+          // Store parsed data
+          hidden.value = JSON.stringify({
+            source: 'vl_parsed',
+            label: label,
+            parsed: {
+              streetName,
+              houseNumber,
+              postalCode,
+              cityName
+            }
+          });
+        }
       }
 
       // Input event with debouncing

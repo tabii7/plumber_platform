@@ -58,6 +58,10 @@ class ClientRegistrationController extends Controller
             'country' => 'Belgium',
             'role' => 'client',
             'address_json' => $request->address_json,
+            // Add default yearly subscription for clients
+            'subscription_plan' => 'client_yearly',
+            'subscription_status' => 'active',
+            'subscription_ends_at' => now()->addYear(),
         ]);
 
         event(new Registered($user));

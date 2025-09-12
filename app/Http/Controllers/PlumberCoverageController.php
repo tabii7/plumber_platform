@@ -166,6 +166,94 @@ class PlumberCoverageController extends Controller
         return response()->json($allMunicipalities);
     }
 
+    // Auto-add 5km nearby areas based on user's city
+    public function autoAddNearby(Request $request)
+    {
+        $user = Auth::user();
+        abort_unless($user && $user->role === 'plumber', 403);
+
+        if (!$user->city) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please set your city in your profile first.'
+            ], 400);
+        }
+
+        // Find the user's municipality based on their city
+        $userMunicipality = DB::table('postal_codes')
+            ->where('Plaatsnaam_NL', $user->city)
+            ->whereNotNull('Hoofdgemeente')
+            ->value('Hoofdgemeente');
+
+        if (!$userMunicipality) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not find municipality for your city. Please contact support.'
+            ], 400);
+        }
+
+        // Get center coordinates of user's municipality
+        $center = DB::table('postal_codes')
+            ->select('Latitude', 'Longitude')
+            ->where('Hoofdgemeente', $userMunicipality)
+            ->whereNotNull('Latitude')
+            ->whereNotNull('Longitude')
+            ->first();
+
+        if (!$center) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not find coordinates for your municipality.'
+            ], 400);
+        }
+
+        // Find nearby municipalities within 5km
+        $nearby = DB::table('postal_codes')
+            ->select('Hoofdgemeente')
+            ->selectRaw('
+                (6371 * acos(cos(radians(?)) * cos(radians(Latitude)) * 
+                cos(radians(Longitude) - radians(?)) + sin(radians(?)) * 
+                sin(radians(Latitude)))) AS distance
+            ', [$center->Latitude, $center->Longitude, $center->Latitude])
+            ->whereNotNull('Latitude')
+            ->whereNotNull('Longitude')
+            ->having('distance', '<=', 5) // 5km radius
+            ->groupBy('Hoofdgemeente')
+            ->orderBy('distance')
+            ->limit(10)
+            ->pluck('Hoofdgemeente');
+
+        if ($nearby->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No nearby municipalities found within 5km of your location.'
+            ], 400);
+        }
+
+        // Add municipalities to coverage (avoid duplicates)
+        $added = 0;
+        $existing = PlumberCoverage::where('plumber_id', $user->id)
+            ->pluck('hoofdgemeente')
+            ->toArray();
+
+        foreach ($nearby as $municipality) {
+            if (!in_array($municipality, $existing)) {
+                PlumberCoverage::create([
+                    'plumber_id' => $user->id,
+                    'hoofdgemeente' => $municipality,
+                    'coverage_type' => 'municipality'
+                ]);
+                $added++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully added {$added} nearby municipalities within 5km of your location.",
+            'added_count' => $added
+        ]);
+    }
+
     // AJAX: bulk add multiple municipalities and cities
     public function bulkStore(Request $request)
     {
@@ -173,15 +261,19 @@ class PlumberCoverageController extends Controller
         abort_unless($user && $user->role === 'plumber', 403);
 
         $data = $request->validate([
-            'municipalities' => 'required|array',
+            'municipalities' => 'sometimes|array',
             'municipalities.*' => 'string|max:255',
+            'cities' => 'sometimes|array',
+            'cities.*' => 'string|max:255',
         ]);
 
         $added = 0;
         $errors = [];
         $processedMunicipalities = []; // Track to avoid duplicates
 
-        foreach ($data['municipalities'] as $item) {
+        // Process municipalities
+        $municipalities = $data['municipalities'] ?? [];
+        foreach ($municipalities as $item) {
             // First, check if this is a municipality (Hoofdgemeente)
             $municipalityExists = DB::table('postal_codes')
                 ->where('Hoofdgemeente', $item)
@@ -266,6 +358,56 @@ class PlumberCoverageController extends Controller
 
                 $added++;
             }
+        }
+
+        // Process cities
+        $cities = $data['cities'] ?? [];
+        foreach ($cities as $cityName) {
+            // Find the parent municipality for this city
+            $cityData = DB::table('postal_codes')
+                ->select('Hoofdgemeente', 'Plaatsnaam_NL')
+                ->where('Plaatsnaam_NL', $cityName)
+                ->first();
+
+            if (!$cityData) {
+                $errors[] = "City '{$cityName}' not found.";
+                continue;
+            }
+
+            $municipality = $cityData->Hoofdgemeente;
+            $city = $cityData->Plaatsnaam_NL;
+            
+            // Check if this specific city already exists in coverage
+            $alreadyExists = PlumberCoverage::where('plumber_id', $user->id)
+                ->where('hoofdgemeente', $municipality)
+                ->where('city', $city)
+                ->where('coverage_type', 'city')
+                ->exists();
+
+            if ($alreadyExists) {
+                $errors[] = "City '{$city}' already added.";
+                continue;
+            }
+            
+            // Check if the entire municipality is already covered
+            $municipalityCovered = PlumberCoverage::where('plumber_id', $user->id)
+                ->where('hoofdgemeente', $municipality)
+                ->where('coverage_type', 'municipality')
+                ->exists();
+
+            if ($municipalityCovered) {
+                $errors[] = "Municipality '{$municipality}' already fully covered.";
+                continue;
+            }
+
+            PlumberCoverage::create([
+                'plumber_id' => $user->id,
+                'hoofdgemeente' => $municipality,
+                'city' => $city,
+                'coverage_type' => 'city',
+            ]);
+
+            $added++;
         }
 
         $response = [
