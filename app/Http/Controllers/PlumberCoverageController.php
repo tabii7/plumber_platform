@@ -101,6 +101,9 @@ class PlumberCoverageController extends Controller
     // AJAX: list towns/postcodes under a municipality (preview)
     public function municipalityTowns($name)
     {
+        $user = Auth::user();
+        $userCity = $user ? $user->city : null;
+        
         $rows = DB::table('postal_codes')
             ->select('Postcode', 'Plaatsnaam_NL')
             ->where('Hoofdgemeente', $name)
@@ -110,7 +113,159 @@ class PlumberCoverageController extends Controller
             ->orderBy('Postcode')
             ->get();
 
+        // Calculate distances if user has a city
+        if ($userCity) {
+            $userCoords = DB::table('postal_codes')
+                ->select('Latitude', 'Longitude')
+                ->where('Plaatsnaam_NL', $userCity)
+                ->whereNotNull('Latitude')
+                ->whereNotNull('Longitude')
+                ->first();
+
+            if ($userCoords) {
+                foreach ($rows as $row) {
+                    if ($row->Plaatsnaam_NL === $userCity) {
+                        $row->distance = 0;
+                    } else {
+                        // Get coordinates for this specific city
+                        $cityCoords = DB::table('postal_codes')
+                            ->select('Latitude', 'Longitude')
+                            ->where('Plaatsnaam_NL', $row->Plaatsnaam_NL)
+                            ->whereNotNull('Latitude')
+                            ->whereNotNull('Longitude')
+                            ->first();
+
+                        if ($cityCoords) {
+                            $distance = DB::selectOne('
+                                SELECT (6371 * acos(cos(radians(?)) * cos(radians(?)) * 
+                                cos(radians(?) - radians(?)) + sin(radians(?)) * 
+                                sin(radians(?)))) AS distance
+                            ', [
+                                $userCoords->Latitude, $cityCoords->Latitude,
+                                $cityCoords->Longitude, $userCoords->Longitude,
+                                $userCoords->Latitude, $cityCoords->Latitude
+                            ]);
+                            $row->distance = $distance->distance ?? 0;
+                        } else {
+                            $row->distance = 0;
+                        }
+                    }
+                }
+            } else {
+                // User city not found, set all distances to 0
+                foreach ($rows as $row) {
+                    $row->distance = 0;
+                }
+            }
+        } else {
+            // No user city, set all distances to 0
+            foreach ($rows as $row) {
+                $row->distance = 0;
+            }
+        }
+
         return response()->json($rows);
+    }
+
+    // AJAX: calculate distance between two cities
+    public function calculateDistance(Request $request)
+    {
+        $from = $request->query('from');
+        $to = $request->query('to');
+
+        if (!$from || !$to) {
+            return response()->json(['distance' => 0]);
+        }
+
+        // Get coordinates for both cities
+        $fromCoords = DB::table('postal_codes')
+            ->select('Latitude', 'Longitude')
+            ->where('Plaatsnaam_NL', $from)
+            ->whereNotNull('Latitude')
+            ->whereNotNull('Longitude')
+            ->first();
+
+        $toCoords = DB::table('postal_codes')
+            ->select('Latitude', 'Longitude')
+            ->where('Plaatsnaam_NL', $to)
+            ->whereNotNull('Latitude')
+            ->whereNotNull('Longitude')
+            ->first();
+
+        if (!$fromCoords || !$toCoords) {
+            return response()->json(['distance' => 0]);
+        }
+
+        // Calculate distance using Haversine formula
+        $distance = DB::selectOne('
+            SELECT (6371 * acos(cos(radians(?)) * cos(radians(?)) * 
+            cos(radians(?) - radians(?)) + sin(radians(?)) * 
+            sin(radians(?)))) AS distance
+        ', [
+            $fromCoords->Latitude, $toCoords->Latitude,
+            $toCoords->Longitude, $fromCoords->Longitude,
+            $fromCoords->Latitude, $toCoords->Latitude
+        ]);
+
+        return response()->json(['distance' => $distance->distance ?? 0]);
+    }
+
+    // AJAX: calculate distances from user's city to multiple cities
+    public function calculateDistances(Request $request)
+    {
+        $from = $request->query('from');
+        $cities = $request->query('cities', []);
+
+        if (!$from || empty($cities)) {
+            return response()->json([]);
+        }
+
+        // Get coordinates for the source city
+        $fromCoords = DB::table('postal_codes')
+            ->select('Latitude', 'Longitude')
+            ->where('Plaatsnaam_NL', $from)
+            ->whereNotNull('Latitude')
+            ->whereNotNull('Longitude')
+            ->first();
+
+        if (!$fromCoords) {
+            return response()->json([]);
+        }
+
+        $distances = [];
+        
+        // Calculate distances for each city
+        foreach ($cities as $city) {
+            if ($city === $from) {
+                $distances[$city] = 0;
+                continue;
+            }
+
+            $toCoords = DB::table('postal_codes')
+                ->select('Latitude', 'Longitude')
+                ->where('Plaatsnaam_NL', $city)
+                ->whereNotNull('Latitude')
+                ->whereNotNull('Longitude')
+                ->first();
+
+            if ($toCoords) {
+                $distance = DB::selectOne('
+                    SELECT (6371 * acos(cos(radians(?)) * cos(radians(?)) * 
+                    cos(radians(?) - radians(?)) + sin(radians(?)) * 
+                    sin(radians(?)))) AS distance
+                ', [
+                    $fromCoords->Latitude, $toCoords->Latitude,
+                    $toCoords->Longitude, $fromCoords->Longitude,
+                    $fromCoords->Latitude, $toCoords->Latitude
+                ]);
+
+                $distances[$city] = $distance->distance ?? 0;
+            } else {
+                $distances[$city] = 0;
+            }
+        }
+
+        return response()->json($distances);
     }
 
     // AJAX: find nearby municipalities within specified radius

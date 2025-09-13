@@ -118,6 +118,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/municipalities/search',   [PlumberCoverageController::class, 'searchMunicipalities'])->name('municipalities.search');
     Route::get('/municipalities/{name}/towns', [PlumberCoverageController::class, 'municipalityTowns'])->name('municipalities.towns');
     Route::get('/municipalities/nearby',   [PlumberCoverageController::class, 'nearbyMunicipalities'])->name('municipalities.nearby');
+    Route::get('/municipalities/distance', [PlumberCoverageController::class, 'calculateDistance'])->name('municipalities.distance');
+    Route::get('/municipalities/distances', [PlumberCoverageController::class, 'calculateDistances'])->name('municipalities.distances');
     Route::post('/plumber/coverage/bulk',  [PlumberCoverageController::class, 'bulkStore'])->name('plumber.coverage.bulk');
     Route::post('/plumber/coverage/auto-nearby', [PlumberCoverageController::class, 'autoAddNearby'])->name('plumber.coverage.auto-nearby');
 

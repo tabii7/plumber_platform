@@ -1,7 +1,7 @@
 # Welcome Message System
 
 ## Overview
-The welcome message system automatically sends personalized welcome messages to new users when they register on the platform. It includes both email and WhatsApp notifications with subscription information.
+The welcome message system automatically sends personalized welcome messages to new users when they register on the Loodgieter.app platform. It includes both email and WhatsApp notifications with subscription information.
 
 ## Features
 
@@ -93,10 +93,10 @@ Welcome message sent to user: John Doe (john@example.com)
 
 ### Email Template
 ```
-Subject: Welcome to Plumber Platform! 🚰
+Subject: Welcome to Loodgieter.app! 🚰
 
 Hello [User Name]!
-Welcome to Plumber Platform! We're excited to have you on board.
+Welcome to Loodgieter.app! We're excited to have you on board.
 You've successfully registered as a [role].
 
 Your Account Details:
@@ -126,7 +126,7 @@ Need Help?
 If you have any questions or need assistance, feel free to reach out to our support team.
 
 Best regards,
-The Plumber Platform Team
+The Loodgieter.app Team
 ```
 
 ### WhatsApp Template

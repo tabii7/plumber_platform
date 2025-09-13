@@ -266,20 +266,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Radius selector change event
 radiusSelector.addEventListener('change', async () => {
     const userCity = '{{ Auth::user()->city }}';
+    const selectedRadius = parseInt(radiusSelector.value);
     
     if (userCity) {
         nearbyTree.innerHTML = '<div class="text-muted text-center py-4">Loading nearby cities...</div>';
-        await loadNearbyMunicipalitiesFromCity(userCity, parseInt(radiusSelector.value));
+        await loadNearbyMunicipalitiesFromCity(userCity, selectedRadius);
     }
 });
 
 // Refresh button click event
 refreshBtn.addEventListener('click', async () => {
     const userCity = '{{ Auth::user()->city }}';
+    const selectedRadius = parseInt(radiusSelector.value);
     
     if (userCity) {
         nearbyTree.innerHTML = '<div class="text-muted text-center py-4">Loading nearby cities...</div>';
-        await loadNearbyMunicipalitiesFromCity(userCity, parseInt(radiusSelector.value));
+        await loadNearbyMunicipalitiesFromCity(userCity, selectedRadius);
     }
 });
 
@@ -287,7 +289,17 @@ refreshBtn.addEventListener('click', async () => {
 async function loadNearbyMunicipalitiesFromCity(city, radius = 20) {
     try {
         // First, find the municipality (Hoofdgemeente) for the user's city
-        const municipalityRes = await fetch(`{{ route('municipalities.search') }}?term=${encodeURIComponent(city)}`);
+        const municipalityRes = await fetch(`{{ route('municipalities.search') }}?term=${encodeURIComponent(city)}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!municipalityRes.ok) {
+            throw new Error(`Failed to search municipalities: ${municipalityRes.status}`);
+        }
+        
         const municipalities = await municipalityRes.json();
         
         if (municipalities.length === 0) {
@@ -299,7 +311,17 @@ async function loadNearbyMunicipalitiesFromCity(city, radius = 20) {
         const baseMunicipality = municipalities[0];
         
         // Now find nearby municipalities from this base
-        const nearbyRes = await fetch(`{{ route('municipalities.nearby') }}?municipality=${encodeURIComponent(baseMunicipality)}&radius=${radius}`);
+        const nearbyRes = await fetch(`{{ route('municipalities.nearby') }}?municipality=${encodeURIComponent(baseMunicipality)}&radius=${radius}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!nearbyRes.ok) {
+            throw new Error(`Failed to fetch nearby municipalities: ${nearbyRes.status}`);
+        }
+        
         const nearbyData = await nearbyRes.json();
         
         if (nearbyData.length === 0) {
@@ -308,15 +330,17 @@ async function loadNearbyMunicipalitiesFromCity(city, radius = 20) {
         }
         
         // Display hierarchical tree
-        displayNearbyTree(nearbyData.map(item => ({
+        const mappedData = nearbyData.map(item => ({
             municipality: item.Hoofdgemeente,
             distance: item.distance,
             sources: [baseMunicipality]
-        })));
+        }));
+        
+        displayNearbyTree(mappedData);
         
     } catch (error) {
-        console.error('Error loading nearby municipalities from city:', error);
-        nearbyTree.innerHTML = '<div class="text-danger text-center py-4">Error loading nearby municipalities</div>';
+        console.error('Error loading nearby municipalities:', error);
+        nearbyTree.innerHTML = '<div class="text-danger text-center py-4">Error: ' + error.message + '</div>';
     }
 }
 
@@ -393,7 +417,7 @@ function displayNearbyTree(municipalityData) {
         const userMunicipalityBg = '';
         const userMunicipalityIcon = 'fas fa-plus expand-icon text-muted';
         const userMunicipalityText = isUserMunicipality ? 'Your Municipality' : (item.sources.length > 1 ? `Near ${item.sources.join(', ')}` : `Near ${item.sources[0]}`);
-        const distanceText = isUserMunicipality ? 'Your Location' : `${item.distance.toFixed(1)}km`;
+        const distanceText = isUserMunicipality ? 'Your Location' : `${item.distance ? item.distance.toFixed(1) : '0.0'}km`;
         
         return `
             <div class="municipality-item border rounded ${itemClass} ${userMunicipalityClass} ${userMunicipalityBg}">
@@ -415,7 +439,7 @@ function displayNearbyTree(municipalityData) {
                     </label>
                 </div>
                 <div class="cities-container d-none ps-5 pe-2 pb-2">
-                    <div class="text-muted small py-2">Loading cities...</div>
+                    <div class="text-muted small py-2"><i class="fas fa-spinner fa-spin me-1"></i>Loading cities...</div>
                 </div>
             </div>
         `;
@@ -517,16 +541,26 @@ function displayNearbyTree(municipalityData) {
 // Function to load cities for a specific municipality
 async function loadCitiesForMunicipality(municipality, container) {
     try {
-        console.log('Loading cities for municipality:', municipality); // Debug log
-        const res = await fetch(`/municipalities/${encodeURIComponent(municipality)}/towns`);
-        const cities = await res.json();
+        const res = await fetch(`/municipalities/${encodeURIComponent(municipality)}/towns`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
         
-        console.log('Cities response:', cities); // Debug log
+        if (!res.ok) {
+            throw new Error(`Failed to load cities: ${res.status}`);
+        }
+        
+        const cities = await res.json();
         
         if (cities.length === 0) {
             container.innerHTML = '<div class="text-muted small py-2">No cities found</div>';
             return;
         }
+        
+        // Get user's city for distance calculation
+        const userCity = '{{ Auth::user()->city }}';
         
         // Get list of already covered municipalities
         const coverageItems = document.querySelectorAll('.list-group-item');
@@ -536,12 +570,20 @@ async function loadCitiesForMunicipality(municipality, container) {
             existingMunicipalities.push(municipalityName);
         });
         
-        container.innerHTML = cities.map(city => {
+        // Cities already include distance data from the server
+        const citiesWithDistances = cities;
+        console.log('Cities with distances:', citiesWithDistances); // Debug log
+        
+        container.innerHTML = citiesWithDistances.map(city => {
             const isAlreadyCovered = existingMunicipalities.includes(city.Plaatsnaam_NL);
             const checkboxDisabled = isAlreadyCovered ? 'disabled' : '';
             const checkboxClass = isAlreadyCovered ? 'form-check-input text-muted' : 'form-check-input text-primary';
             const itemClass = isAlreadyCovered ? 'bg-light' : '';
             const statusText = isAlreadyCovered ? ' (Already covered)' : '';
+            
+            // Show distance for all cities (0km for user's own city)
+            console.log('Processing city:', city.Plaatsnaam_NL, 'Distance:', city.distance, 'Type:', typeof city.distance); // Debug log
+            const distanceText = city.distance !== undefined && city.distance !== null ? ` (${city.distance.toFixed(1)}km)` : '';
             
             return `
                 <div class="d-flex align-items-center p-2 border-start border-2 ${itemClass}">
@@ -551,7 +593,7 @@ async function loadCitiesForMunicipality(municipality, container) {
                            data-type="city"
                            ${checkboxDisabled}>
                     <label for="city-${city.Plaatsnaam_NL}" class="flex-fill small" style="cursor: pointer;">
-                        <div class="fw-medium">➖ ${city.Plaatsnaam_NL} (${city.Postcode})${statusText}</div>
+                        <div class="fw-medium">➖ ${city.Plaatsnaam_NL} (${city.Postcode})${distanceText}${statusText}</div>
                     </label>
                 </div>
             `;
@@ -572,8 +614,8 @@ async function loadCitiesForMunicipality(municipality, container) {
         });
         
     } catch (error) {
-        console.error(`Error loading cities for ${municipality}:`, error);
-        container.innerHTML = '<div class="text-danger small py-2">Error loading cities</div>';
+        console.error('Error loading cities:', error);
+        container.innerHTML = '<div class="text-danger small py-2">Error: ' + error.message + '</div>';
     }
 }
 </script>

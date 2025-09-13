@@ -40,9 +40,9 @@ class WhatsAppWelcomeNotification extends Notification
         $user = $notifiable;
         $hasActiveSubscription = $this->hasActiveSubscription($user);
         
-        $message = "🚰 *Welcome to Plumber Platform!*\n\n";
+        $message = "🚰 *Welcome to Loodgieter.app!*\n\n";
         $message .= "Hello {$user->full_name}!\n";
-        $message .= "Welcome to Plumber Platform! We're excited to have you on board.\n\n";
+        $message .= "Welcome to Loodgieter.app! We're excited to have you on board.\n\n";
         
         $message .= "*Your Account Details:*\n";
         $message .= "• Role: " . ucfirst($user->role) . "\n";
@@ -74,7 +74,7 @@ class WhatsAppWelcomeNotification extends Notification
         
         $message .= "\n\n*Need Help?*\n";
         $message .= "If you have any questions or need assistance, feel free to reach out to our support team.\n\n";
-        $message .= "Best regards,\nThe Plumber Platform Team";
+        $message .= "Best regards,\nThe Loodgieter.app Team";
 
         return [
             'whatsapp_number' => $user->whatsapp_number,

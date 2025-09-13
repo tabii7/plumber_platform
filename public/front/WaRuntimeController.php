@@ -19,17 +19,17 @@ class WaRuntimeController extends Controller
 
         // Log incoming message
         WaLog::create([
-            'wa_number' => $from,
-            'direction' => 'in',
-            'payload_json' => $request->all(),
-            'status' => 'recv'
+            'wa_number'   => $from,
+            'direction'   => 'in',
+            'payload_json'=> $request->all(),
+            'status'      => 'recv'
         ]);
 
         // Find user
         $user = User::where('whatsapp_number', $from)->first();
 
         if (!$user) {
-            // Handle unregistered user flow
+            // Unregistered flow
             return $this->handleDynamicFlow($from, $text, null, 'unregistered_flow', 'register_prompt', null, $originalText);
         }
 
@@ -43,83 +43,123 @@ class WaRuntimeController extends Controller
 
         // Get or create session
         $session = WaSession::where('wa_number', $from)->first();
+
         if (!$session) {
+            // Create only for clients by default
             if ($user->role === 'client') {
                 $session = WaSession::create([
-                    'wa_number' => $from,
-                    'user_id' => $user->id,
-                    'flow_code' => 'client_flow',
-                    'node_code' => 'C0',
-                    'context_json' => [
-                        'user_first_name' => explode(' ', $user->full_name)[0],
-                        'user_address' => $user->address,
+                    'wa_number'      => $from,
+                    'user_id'        => $user->id,
+                    'flow_code'      => 'client_flow',
+                    'node_code'      => 'C0',
+                    'context_json'   => [
+                        'user_first_name'  => explode(' ', $user->full_name)[0],
+                        'user_address'     => $user->address,
                         'user_postal_code' => $user->postal_code,
-                        'user_city' => $user->city,
+                        'user_city'        => $user->city,
                     ],
                     'last_message_at' => $now,
                 ]);
             }
         }
 
-        // Quick commands
+        // Menu
         if ($text === 'menu' || $text === 'help') {
             return $this->showMenu($from, $user, $session);
         }
 
-        if ($text === 'exit' || $text === '7') { // updated exit index in menu
+        // Exit command (text only; numeric exit is handled in menu switch)
+        if ($text === 'exit') {
             if ($session) $session->delete();
             return $this->replyText($from, "Menu closed. Type 'help' to open the menu again or 'start' to begin a new request.");
         }
 
-        // New: cancel command
-        if ($text === 'cancel' || $text === '8') {
-            return $this->cancelCurrentRequest($from, $user, $session);
-        }
-
-        // Complete (both roles allowed)
-        if ($text === 'complete') {
-            return $this->markJobCompletedForUser($from, $user, $session);
-        }
-
-        // Rating (client)
+        // Client: rate
         if ($text === 'rate' && $user->role === 'client') {
             return $this->handleRatingRequest($from, $user, $session);
         }
 
-        // Plumber shortcuts
+        // Mark complete (both roles)
+        if ($text === 'complete') {
+            if ($user->role === 'plumber') {
+                return $this->markJobCompleted($from, $user, $session);
+            } else {
+                return $this->markJobCompletedByClient($from, $user, $session);
+            }
+        }
+
+        // Plumber: show current request
         if ($text === 'current_request' && $user->role === 'plumber') {
             return $this->showPlumberCurrentRequest($from, $user, $session);
         }
 
-        // START: always start new — delete any current first
+        // Start/new
         if ($text === 'start' || $originalText === 'Start') {
-            return $this->handleStartCommand($from, $user, $session, /*forceNew*/ true);
+            if ($user->role === 'client') {
+                $activeRequest = WaRequest::where('customer_id', $user->id)
+                    ->whereIn('status', ['broadcasting', 'active', 'in_progress'])
+                    ->first();
+
+                if ($activeRequest) {
+                    $message = "You already have an active request (ID: {$activeRequest->id}).\n\n";
+                    if ($activeRequest->status === 'broadcasting') {
+                        $message .= "Your request is currently being sent to available plumbers.\n";
+                        $message .= "Type 'offers' to check for responses from plumbers.";
+                    } else {
+                        $message .= "A plumber has been selected for your job.\n";
+                        $message .= "Type 'status' to check the current status.";
+                    }
+                    return $this->replyText($from, $message);
+                }
+            }
+
+            if ($session) $session->delete();
+
+            if ($user->role === 'client') {
+                $session = WaSession::create([
+                    'wa_number'      => $from,
+                    'user_id'        => $user->id,
+                    'flow_code'      => 'client_flow',
+                    'node_code'      => 'C0',
+                    'context_json'   => [
+                        'user_first_name'  => explode(' ', $user->full_name)[0],
+                        'user_address'     => $user->address,
+                        'user_postal_code' => $user->postal_code,
+                        'user_city'        => $user->city,
+                    ],
+                    'last_message_at' => $now,
+                ]);
+            } else {
+                return $this->replyText($from, "👋 Hi " . explode(' ', $user->full_name)[0] . "! You're now available to receive job requests.\n\nWhen a customer creates a request near you, you'll receive a notification automatically.\n\nType 'help' for available commands.");
+            }
         }
 
-        // Offers / Status (client)
+        // Client: offers list
         if ($text === 'offers' && $user->role === 'client') {
             return $this->showOffersList($from, $user, $session);
         }
+
+        // Client: status
         if ($text === 'status' && $user->role === 'client') {
             return $this->showRequestStatus($from, $user, $session);
         }
 
-        // No session case
+        // No session?
         if (!$session) {
             if ($user->role === 'plumber') {
                 return $this->replyText($from, "👋 Hi " . explode(' ', $user->full_name)[0] . "! You're now available to receive job requests.\n\nWhen a customer creates a request near you, you'll receive a notification automatically.\n\nType 'help' for available commands.");
             }
             return $this->replyText($from, "Session error. Please try again.");
         }
-        
+
         $currentFlowCode = $session->flow_code ?? ($user->role === 'client' ? 'client_flow' : 'plumber_flow');
-        
-        // Numeric selections when in menu
+
+        // If in menu + numeric selection
         if (is_numeric($text) && $session && $session->node_code === 'menu') {
             switch ($text) {
-                case '1': // start new (delete old if any)
+                case '1':
                     if ($user->role === 'client') {
-                        return $this->handleStartCommand($from, $user, $session, /*forceNew*/ true);
+                        return $this->handleStartCommand($from, $user, $session);
                     } else {
                         return $this->setAvailability($from, $user, $session, true);
                     }
@@ -131,9 +171,9 @@ class WaRuntimeController extends Controller
                     }
                 case '3':
                     if ($user->role === 'client') {
-                        return $this->markJobCompletedForUser($from, $user, $session);
+                        return $this->markJobCompletedByClient($from, $user, $session);
                     } else {
-                        return $this->markJobCompletedForUser($from, $user, $session);
+                        return $this->markJobCompleted($from, $user, $session);
                     }
                 case '4':
                     if ($user->role === 'client') {
@@ -151,22 +191,21 @@ class WaRuntimeController extends Controller
                     if ($user->role === 'client') {
                         return $this->showSupportMessage($from, $user, $session);
                     } else {
+                        // plumber exit
                         if ($session) $session->delete();
                         return $this->replyText($from, "Menu closed. Type 'help' to open the menu again or 'start' to begin a new request.");
                     }
-                case '7': // Exit (client) or none
-                    if ($session) $session->delete();
-                    return $this->replyText($from, "Menu closed. Type 'help' to open the menu again or 'start' to begin a new request.");
-                case '8': // Cancel current request (client)
+                case '7':
                     if ($user->role === 'client') {
-                        return $this->cancelCurrentRequest($from, $user, $session);
+                        if ($session) $session->delete();
+                        return $this->replyText($from, "Menu closed. Type 'help' to open the menu again or 'start' to begin a new request.");
                     }
                     return $this->showMenu($from, $user, $session);
                 default:
                     return $this->showMenu($from, $user, $session);
             }
         }
-        
+
         return $this->handleDynamicFlow($from, $text, $user, $currentFlowCode, $session->node_code, $session, $originalText);
     }
 
@@ -184,7 +223,7 @@ class WaRuntimeController extends Controller
             case 'C4': // consent to broadcast
                 if ($text === 'yes' || $text === '1') {
                     $this->createAndBroadcastRequest($user, $ctx);
-                    $nextNode = $this->getNextNode($node, $text);
+                    $nextNode = $this->getNextNode($node, $text) ?: $this->getNode('client_flow', 'C5');
                     if ($session && $nextNode) {
                         $session->node_code = $nextNode->code;
                         $session->context_json = $ctx;
@@ -197,10 +236,8 @@ class WaRuntimeController extends Controller
                 }
                 break;
 
-            case 'C5': // waiting/offers
-                if ($text === 'help') {
-                    return $this->showMenu($from, $user, $session);
-                }
+            case 'C5': // waiting
+                if ($text === 'help') return $this->showMenu($from, $user, $session);
                 return $this->showOffersList($from, $user, $session);
 
             case 'C6': // offers list
@@ -210,7 +247,7 @@ class WaRuntimeController extends Controller
                 }
                 return $this->showOffersList($from, $user, $session);
 
-            case 'C7': // offer details -> selection
+            case 'C7': // confirm select
                 if ($text === 'yes' || $text === '1') {
                     $selectedOfferId = $ctx['selected_offer_id'] ?? null;
                     if ($selectedOfferId) {
@@ -232,18 +269,15 @@ class WaRuntimeController extends Controller
                 }
                 break;
 
-            case 'P0': // broadcast -> yes/no
+            case 'P0': // plumber sees new job
                 if ($text === 'yes' || $text === '1') {
-                    $nextNode = $this->getNextNode($node, $text);
-                    if ($session && $nextNode) {
-                        $session->node_code = $nextNode->code;
-                        $session->context_json = $ctx;
+                    $p1 = $this->getNode('plumber_flow', 'P1');
+                    if ($session && $p1) {
+                        $session->node_code = 'P1';
                         $session->save();
+                        return $this->sendNodeResponse($from, $p1, $ctx);
                     }
-                    if ($nextNode) {
-                        return $this->sendNodeResponse($from, $nextNode, $ctx);
-                    }
-                    \Log::error("Next node is null for P0", ['from' => $from, 'input' => $text]);
+                    \Log::error("P0 accept but P1 missing", ['from'=>$from]);
                     return $this->replyText($from, "Sorry, there was an issue processing your request. Please try again.");
                 } elseif ($text === 'no' || $text === '2') {
                     if ($session) $session->delete();
@@ -251,21 +285,21 @@ class WaRuntimeController extends Controller
                 }
                 break;
 
-            case 'P1': // plumber typed their message -> create offer
-                $ctx['personal_message'] = $text;
+            case 'P1': // plumber typed personal message (offer)
+                $ctx['personal_message'] = $originalText ?? $text;
                 if ($session) {
                     $existingContext = $session->context_json ?? [];
                     $session->context_json = array_merge($existingContext, $ctx);
                     $session->save();
                 }
-                $this->createOffer($user, $ctx);
+                $this->createOffer($user, $ctx); // create + notify client (and list)
                 return $this->replyText($from, "Thanks! Your offer has been sent to the client. You'll be notified if they choose you.");
 
             case 'R1': // rating
                 return $this->processRating($from, $user, $session, $text);
         }
 
-        // Generic node progression
+        // Generic node processing
         return $this->processDynamicNode($from, $text, $user, $node, $ctx, $session, $originalText);
     }
 
@@ -273,15 +307,20 @@ class WaRuntimeController extends Controller
     {
         $options = $node->options_json ?? [];
         $nextMap = $node->next_map_json ?? [];
-
         $matchedOption = null;
+
+        // exact id
         foreach ($options as $option) {
-            if (isset($option['id']) && $option['id'] === $text) { $matchedOption = $option; break; }
+            if (isset($option['id']) && $option['id'] === $text) {
+                $matchedOption = $option; break;
+            }
         }
+        // numeric index
         if (!$matchedOption && is_numeric($text)) {
-            $optionIndex = (int) $text - 1;
-            if (isset($options[$optionIndex])) $matchedOption = $options[$optionIndex];
+            $idx = (int)$text - 1;
+            if (isset($options[$idx])) $matchedOption = $options[$idx];
         }
+        // variations
         if (!$matchedOption) {
             foreach ($options as $option) {
                 if (isset($option['variations']) && in_array($text, $option['variations'])) {
@@ -289,33 +328,28 @@ class WaRuntimeController extends Controller
                 }
             }
         }
+        // partial contains
         if (!$matchedOption) {
             foreach ($options as $option) {
-                if (!isset($option['text'])) continue;
-                $optionText = strtolower($option['text']);
-                $userText = strtolower($text);
-                if (stripos($optionText, $userText) !== false || stripos($userText, $optionText) !== false) {
-                    $matchedOption = $option; break;
-                }
-                if (($optionText === 'leak' && in_array($userText, ['leak','leakage','water leak','dripping'])) ||
-                    ($optionText === 'blockage / drain' && in_array($userText, ['blockage','drain','clogged','clog','blocked'])) ||
-                    ($optionText === 'heating / boiler' && in_array($userText, ['heating','boiler','hot water','heater'])) ||
-                    ($optionText === 'installation / replacement' && in_array($userText, ['installation','replace','new','install'])) ||
-                    ($optionText === 'other' && in_array($userText, ['other','something else','different']))) {
-                    $matchedOption = $option; break;
+                if (isset($option['text'])) {
+                    $opt = strtolower($option['text']);
+                    $usr = strtolower($text);
+                    if (stripos($opt, $usr) !== false || stripos($usr, $opt) !== false) {
+                        $matchedOption = $option; break;
+                    }
                 }
             }
         }
 
+        // Next node
         $nextNode = null;
         if ($matchedOption && isset($nextMap[$matchedOption['id']])) {
-            $nextNodeCode = $nextMap[$matchedOption['id']];
-            $nextNode = WaNode::where('flow_id', $node->flow_id)->where('code', $nextNodeCode)->first();
+            $nextNode = WaNode::where('flow_id', $node->flow_id)->where('code', $nextMap[$matchedOption['id']])->first();
         } elseif (isset($nextMap['default'])) {
-            $nextNodeCode = $nextMap['default'];
-            $nextNode = WaNode::where('flow_id', $node->flow_id)->where('code', $nextNodeCode)->first();
+            $nextNode = WaNode::where('flow_id', $node->flow_id)->where('code', $nextMap['default'])->first();
         }
 
+        // Context updates
         if ($matchedOption) {
             $ctx['last_input'] = $text;
             $ctx['last_option'] = $matchedOption;
@@ -340,7 +374,7 @@ class WaRuntimeController extends Controller
 
         $targetNode = $nextNode ?: $node;
         if (!$targetNode) {
-            \Log::error("Both nextNode and node are null");
+            \Log::error("Both nextNode and node are null", ['from' => $from]);
             return $this->replyText($from, "Sorry, there was an issue processing your request. Please try again.");
         }
         return $this->sendNodeResponse($from, $targetNode, $ctx);
@@ -349,29 +383,42 @@ class WaRuntimeController extends Controller
     private function sendNodeResponse($from, $node, $ctx)
     {
         if (!$node || !$node->body) {
-            \Log::error("Node body is null or empty", ['node_id' => $node->id ?? 'unknown', 'node_code' => $node->code ?? 'unknown']);
+            \Log::error("Node body null/empty", ['node_code'=>$node->code ?? 'unknown', 'from'=>$from]);
             return $this->replyText($from, "Sorry, there was an issue with the message. Please try again.");
         }
-        
+
         $body = $this->replaceVariables($node->body, $ctx);
-        
+
         switch ($node->type) {
             case 'buttons':
                 $options = $node->options_json ?? [];
                 $formattedOptions = [];
                 foreach ($options as $option) {
-                    $formattedOptions[] = ['id' => $option['id'], 'text' => $option['text']];
+                    $label = $option['text'] ?? 'Option';
+                    $label = preg_replace('/^\s*\d+[\.\)]\s*/', '', $label);
+                    $formattedOptions[] = ['id' => $option['id'], 'text' => $label];
                 }
-                return $this->sendButtons($from, ['body' => $body, 'options' => $formattedOptions]);
+                return $this->sendButtons($from, [
+                    'body'    => $body,
+                    'options' => $formattedOptions
+                ]);
+
             case 'list':
                 $options = $node->options_json ?? [];
-                return $this->sendList($from, ['title' => $node->title, 'body' => $body, 'options' => $options]);
+                return $this->sendList($from, [
+                    'title'   => $node->title,
+                    'body'    => $body,
+                    'options' => $options
+                ]);
+
+            case 'collect_text':
+            case 'text':
             default:
                 return $this->replyText($from, $body);
         }
     }
 
-    // ---------- proactive send helpers ----------
+    // ---------- proactive helpers ----------
     private function formatButtonsAsText(array $payload): string
     {
         $lines = [];
@@ -382,7 +429,7 @@ class WaRuntimeController extends Controller
             foreach ($options as $i => $opt) {
                 $n = $i + 1;
                 $label = $opt['text'] ?? ("Option {$n}");
-                $cleanLabel = preg_replace('/^\d+\)?\s*/', '', $label);
+                $cleanLabel = preg_replace('/^\d+[\.\)]?\s*/', '', $label);
                 $lines[] = "{$n}) {$cleanLabel}";
             }
         }
@@ -394,7 +441,10 @@ class WaRuntimeController extends Controller
         $body = $this->replaceVariables($node->body, $ctx);
 
         if ($node->type === 'buttons') {
-            $text = $this->formatButtonsAsText(['body' => $body, 'options' => $node->options_json ?? []]);
+            $text = $this->formatButtonsAsText([
+                'body'    => $body,
+                'options' => $node->options_json ?? []
+            ]);
             $this->waSend($to, $text);
         } elseif ($node->type === 'list') {
             $lines = [$body];
@@ -407,7 +457,7 @@ class WaRuntimeController extends Controller
                         foreach ($section['rows'] as $i => $row) {
                             $n = $i + 1;
                             $title = $row['title'] ?? ("Option {$n}");
-                            $cleanTitle = preg_replace('/^\d+\)?\s*/', '', $title);
+                            $cleanTitle = preg_replace('/^\d+[\.\)]?\s*/', '', $title);
                             $lines[] = "{$n}) {$cleanTitle}";
                         }
                     }
@@ -423,22 +473,27 @@ class WaRuntimeController extends Controller
     {
         try {
             $botBase = rtrim(config('services.wa_bot.url', 'http://127.0.0.1:3000'), '/');
-            Http::post($botBase . '/send-message', ['number' => $number, 'message' => $message]);
+            Http::post($botBase . '/send-message', [
+                'number'  => $number,
+                'message' => $message,
+            ]);
         } catch (\Throwable $e) {
             \Log::error('WA proactive send failed', ['to' => $number, 'error' => $e->getMessage()]);
         }
     }
-    // ---------- end proactive helpers ----------
+    // ---------- end proactive ----------
 
     private function replaceVariables($text, $ctx)
     {
         if (!$text) return '';
-        return preg_replace_callback('/\{\{(\w+)\}\}/', function($matches) use ($ctx) {
-            $varName = $matches[1];
+        return preg_replace_callback('/\{\{(\w+)\}\}/', function($m) use ($ctx) {
+            $varName = $m[1];
             switch ($varName) {
-                case 'first_name':   return $ctx['user_first_name'] ?? 'User';
-                case 'customer_name':return $ctx['customer_name'] ?? 'Customer';
-                case 'address':      $address = $ctx['address'] ?? $ctx['user_address'] ?? ''; return $address ?: 'Address not provided';
+                case 'first_name':  return $ctx['user_first_name'] ?? 'User';
+                case 'customer_name': return $ctx['customer_name'] ?? 'Customer';
+                case 'address':
+                    $address = $ctx['address'] ?? $ctx['user_address'] ?? '';
+                    return $address !== '' ? $address : 'Address not provided';
                 case 'postal_code':  return $ctx['postal_code'] ?? $ctx['user_postal_code'] ?? '';
                 case 'city':         return $ctx['city'] ?? $ctx['user_city'] ?? 'Unknown city';
                 case 'plumber_name': return $ctx['plumber_name'] ?? 'the plumber';
@@ -446,12 +501,12 @@ class WaRuntimeController extends Controller
                     $map = ['leak'=>'Leak','blockage'=>'Blockage / Drain','heating'=>'Heating / Boiler','installation'=>'Installation / Replacement','other'=>'Other'];
                     return $map[$ctx['problem'] ?? ''] ?? 'Unknown problem';
                 case 'urgency_label':
-                    $map = ['high'=>'High — max 60 min','normal'=>'Normal — max 2 hours','later'=>'Later today / schedule'];
-                    return $map[$ctx['urgency'] ?? ''] ?? 'Normal';
+                    $um = ['high'=>'High — max 60 min','normal'=>'Normal — max 2 hours','later'=>'Later today / schedule'];
+                    return $um[$ctx['urgency'] ?? ''] ?? 'Normal';
                 case 'description':  return $ctx['description'] ?? 'No description provided';
                 case 'distance_km':  return $ctx['distance_km'] ?? '5';
                 case 'eta_min':      return $ctx['eta_min'] ?? '20';
-                default:             return $ctx[$varName] ?? $matches[0];
+                default:             return $ctx[$varName] ?? $m[0];
             }
         }, $text);
     }
@@ -459,10 +514,14 @@ class WaRuntimeController extends Controller
     private function getNode($flowCode, $nodeCode)
     {
         $flow = WaFlow::where('code', $flowCode)->where('is_active', true)->first();
-        if (!$flow) { \Log::error("Flow not found or inactive", ['flow_code' => $flowCode]); return null; }
-
+        if (!$flow) {
+            \Log::error("Flow not found or inactive", ['flow_code'=>$flowCode, 'node_code'=>$nodeCode]);
+            return null;
+        }
         $node = WaNode::where('flow_id', $flow->id)->where('code', $nodeCode)->first();
-        if (!$node) { \Log::error("Node not found", ['flow_code' => $flowCode, 'node_code' => $nodeCode, 'flow_id' => $flow->id]); }
+        if (!$node) {
+            \Log::error("Node not found", ['flow_code'=>$flowCode, 'node_code'=>$nodeCode, 'flow_id'=>$flow->id]);
+        }
         return $node;
     }
 
@@ -478,64 +537,75 @@ class WaRuntimeController extends Controller
 
     private function showMenu($from, $user, $session)
     {
-        // Create session for plumbers if needed
+        // Ensure plumber has a session when opening menu
         if (!$session && $user->role === 'plumber') {
             $session = WaSession::create([
-                'wa_number' => $from,
-                'user_id' => $user->id,
-                'flow_code' => 'plumber_flow',
-                'node_code' => 'menu',
-                'context_json' => [
-                    'user_first_name' => explode(' ', $user->full_name)[0],
-                    'user_address' => $user->address,
+                'wa_number'      => $from,
+                'user_id'        => $user->id,
+                'flow_code'      => 'plumber_flow',
+                'node_code'      => 'menu',
+                'context_json'   => [
+                    'user_first_name'  => explode(' ', $user->full_name)[0],
+                    'user_address'     => $user->address,
                     'user_postal_code' => $user->postal_code,
-                    'user_city' => $user->city,
+                    'user_city'        => $user->city,
                 ],
                 'last_message_at' => now(),
             ]);
         }
-        if ($session) { $session->node_code = 'menu'; $session->save(); }
-        
+        if ($session) {
+            $session->node_code = 'menu';
+            $session->save();
+        }
+
         if ($user->role === 'client') {
-            $message  = "📋 *Client Menu*\n\n";
-            $message .= "Choose an option:\n\n";
-            $message .= "1) Start new request\n";
-            $message .= "2) View offers\n";
-            $message .= "3) Mark job as completed\n";
-            $message .= "4) Rate completed job\n";
-            $message .= "5) View status of current request\n";
-            $message .= "6) Contact support\n";
-            $message .= "7) Exit this menu\n";
-            $message .= "8) Cancel current request\n\n";
-            $message .= "Reply with the number (1-8) to select an option.";
-            return $this->replyText($from, $message);
+            // UPDATED client menu (adds "Mark job as completed" + moves support to 6, exit to 7)
+            $msg  = "📋 *Client Menu*\n\n";
+            $msg .= "Choose an option:\n\n";
+            $msg .= "1) Start new request\n";
+            $msg .= "2) View offers\n";
+            $msg .= "3) Mark job as completed\n";
+            $msg .= "4) Rate completed job\n";
+            $msg .= "5) View status of current request\n";
+            $msg .= "6) Contact support\n";
+            $msg .= "7) Exit this menu\n\n";
+            $msg .= "Reply with the number (1-7) to select an option.";
+            return $this->replyText($from, $msg);
         } else {
-            $message  = "🔧 *Plumber Menu*\n\n";
-            $message .= "Choose an option:\n\n";
-            $message .= "1) Set availability ON\n";
-            $message .= "2) Set availability OFF\n";
-            $message .= "3) Mark job as completed\n";
-            $message .= "4) Current request\n";
-            $message .= "5) Contact support\n";
-            $message .= "6) Exit this menu\n\n";
-            $message .= "Reply with the number (1-6) to select an option.";
-            return $this->replyText($from, $message);
+            // Plumber menu unchanged
+            $msg  = "🔧 *Plumber Menu*\n\n";
+            $msg .= "Choose an option:\n\n";
+            $msg .= "1) Set availability ON\n";
+            $msg .= "2) Set availability OFF\n";
+            $msg .= "3) Mark job as completed\n";
+            $msg .= "4) Current request\n";
+            $msg .= "5) Contact support\n";
+            $msg .= "6) Exit this menu\n\n";
+            $msg .= "Reply with the number (1-6) to select an option.";
+            return $this->replyText($from, $msg);
         }
     }
 
     private function createAndBroadcastRequest($user, $ctx)
     {
-        // safety: avoid duplicate
         $existingRequest = WaRequest::where('customer_id', $user->id)
             ->whereIn('status', ['broadcasting', 'active', 'in_progress'])
             ->first();
-        if ($existingRequest) return;
+
+        if ($existingRequest) {
+            \Log::warning("Duplicate request attempt", [
+                'user_id' => $user->id,
+                'existing_request_id' => $existingRequest->id,
+                'existing_status' => $existingRequest->status
+            ]);
+            return;
+        }
 
         $request = WaRequest::create([
             'customer_id' => $user->id,
-            'problem'     => $ctx['problem'] ?? null,
-            'urgency'     => $ctx['urgency'] ?? null,
-            'description' => $ctx['description'] ?? null,
+            'problem'     => $ctx['problem'],
+            'urgency'     => $ctx['urgency'],
+            'description' => $ctx['description'],
             'status'      => 'broadcasting'
         ]);
 
@@ -545,7 +615,8 @@ class WaRuntimeController extends Controller
             ->where(function($q){ $q->where('status','available')->orWhere('status','Available'); })
             ->where(function($q){ $q->where('subscription_status','active')->orWhere('subscription_status','Active')->orWhereNull('subscription_status'); })
             ->whereNotExists(function($q){
-                $q->select(DB::raw(1))->from('wa_requests')
+                $q->select(DB::raw(1))
+                  ->from('wa_requests')
                   ->whereRaw('wa_requests.selected_plumber_id = users.id')
                   ->whereIn('wa_requests.status', ['active','in_progress']);
             })
@@ -566,26 +637,26 @@ class WaRuntimeController extends Controller
         $plumberSession = WaSession::where('wa_number', $plumber->whatsapp_number)->first();
         if ($plumberSession) $plumberSession->delete();
 
-        $urgencyLabel = $this->replaceVariables('{{urgency_label}}', ['urgency' => $ctx['urgency']]);
+        $urgencyLabel = $this->replaceVariables('{{urgency_label}}', ['urgency'=>$ctx['urgency']]);
 
         $plumberSession = WaSession::create([
-            'wa_number' => $plumber->whatsapp_number,
-            'user_id' => $plumber->id,
-            'flow_code' => 'plumber_flow',
-            'node_code' => 'P0',
-            'context_json' => [
-                'request_id' => $request->id,
-                'customer_id' => $customer->id,
-                'customer_name' => explode(' ', $customer->full_name)[0],
-                'address' => $customer->address,
-                'postal_code' => $customer->postal_code,
-                'city' => $customer->city,
-                'problem' => $ctx['problem'] ?? null,
-                'urgency' => $ctx['urgency'] ?? null,
-                'urgency_label' => $urgencyLabel,
-                'description' => $ctx['description'] ?? null,
-                'distance_km' => '5',
-                'eta_min' => '20'
+            'wa_number'   => $plumber->whatsapp_number,
+            'user_id'     => $plumber->id,
+            'flow_code'   => 'plumber_flow',
+            'node_code'   => 'P0',
+            'context_json'=> [
+                'request_id'   => $request->id,
+                'customer_id'  => $customer->id,
+                'customer_name'=> explode(' ', $customer->full_name)[0],
+                'address'      => $customer->address,
+                'postal_code'  => $customer->postal_code,
+                'city'         => $customer->city,
+                'problem'      => $ctx['problem'],
+                'urgency'      => $ctx['urgency'],
+                'urgency_label'=> $urgencyLabel,
+                'description'  => $ctx['description'],
+                'distance_km'  => '5',
+                'eta_min'      => '20'
             ],
             'last_message_at' => now(),
         ]);
@@ -603,28 +674,35 @@ class WaRuntimeController extends Controller
                 $requestId = $plumberSession->context_json['request_id'];
             }
         }
-        if (!$requestId) { \Log::error("Cannot create offer: No request_id", ['plumber_id'=>$plumber->id]); return; }
+        if (!$requestId) {
+            \Log::error("Cannot create offer: missing request_id", ['plumber_id'=>$plumber->id, 'ctx'=>$ctx]);
+            return;
+        }
 
         $offer = WaOffer::create([
-            'plumber_id' => $plumber->id,
-            'request_id' => $requestId,
-            'personal_message' => $ctx['personal_message'] ?? '',
-            'status' => 'pending',
-            'eta_minutes' => 20,
-            'distance_km' => 5.0,
-            'rating' => 4.5
+            'plumber_id'       => $plumber->id,
+            'request_id'       => $requestId,
+            'personal_message' => $ctx['personal_message'],
+            'status'           => 'pending',
+            'eta_minutes'      => 20,
+            'distance_km'      => 5.0,
+            'rating'           => 4.5
         ]);
 
         $request = WaRequest::find($requestId);
         if ($request) {
             $customer = User::find($request->customer_id);
             if ($customer) {
-                $message  = "🎉 New plumber offer received!\n\n";
-                $message .= "Plumber: {$plumber->full_name}\n";
-                $message .= "Message: \"{$offer->personal_message}\"\n";
-                $message .= "ETA: 20 min 🚗\n\n";
-                $message .= "Type 'offers' to view all offers or wait for more.";
-                $this->waSend($customer->whatsapp_number, $message);
+                // push new-offer notice
+                $msg = "🎉 New plumber offer received!\n\n";
+                $msg .= "Plumber: {$plumber->full_name}\n";
+                $msg .= "Phone: +{$plumber->whatsapp_number}\n";
+                $msg .= "Message: \"{$ctx['personal_message']}\"\n";
+                $msg .= "ETA: 20 min 🚗\n\n";
+                $msg .= "Type 'offers' to view all offers or wait for more.";
+                $this->waSend($customer->whatsapp_number, $msg);
+
+                // auto send full list
                 $this->sendAutomaticOffersList($customer, $requestId);
             }
         }
@@ -632,7 +710,13 @@ class WaRuntimeController extends Controller
 
     private function sendAutomaticOffersList($customer, $requestId)
     {
-        $offers = WaOffer::where('request_id', $requestId)->with('plumber')->latest()->get()->unique('plumber_id')->values();
+        $offers = WaOffer::where('request_id', $requestId)
+            ->with('plumber')
+            ->latest()
+            ->get()
+            ->unique('plumber_id')
+            ->values();
+
         if ($offers->isEmpty()) return;
 
         $message = "📋 Current plumber offers (choose a number to view details):\n\n";
@@ -655,15 +739,17 @@ class WaRuntimeController extends Controller
         }
 
         $message = "Plumbers who accepted your job (choose a number to view details):\n\n";
+        $ids = [];
         foreach ($offers as $index => $offer) {
             $plumber = $offer->plumber;
             $message .= ($index + 1) . ") {$plumber->full_name} • ⭐ 4.5 • 20 min 🚗\n";
+            $ids[] = $offer->id;
         }
         $message .= "\nType the number to see details, or wait for more options.";
 
         if ($session) {
             $session->node_code = 'C6';
-            $session->context_json = ['offers' => $offers->pluck('id')->toArray()];
+            $session->context_json = ['offers' => $ids];
             $session->save();
         }
 
@@ -680,8 +766,9 @@ class WaRuntimeController extends Controller
             $offer = $offers[$offerNumber - 1];
             $plumber = $offer->plumber;
 
-            $message  = "Do you want to select this plumber?\n";
+            $message = "Do you want to select this plumber?\n";
             $message .= "Name: {$plumber->full_name}\n";
+            $message .= "Phone: +{$plumber->whatsapp_number}\n";
             $message .= "From: {$plumber->city} • ETA: 20 min 🚗 • Distance: 5 km\n";
             $message .= "Rating: ⭐ 4.5\n";
             $message .= "Message to you: \"{$offer->personal_message}\"";
@@ -695,16 +782,15 @@ class WaRuntimeController extends Controller
             }
 
             return $this->sendButtons($from, [
-                'body' => $message,
+                'body'    => $message,
                 'options' => [
                     ['id' => 'yes', 'text' => 'Yes'],
                     ['id' => 'no', 'text' => 'No'],
                     ['id' => 'choose_again', 'text' => 'Choose again']
                 ]
             ]);
-        } else {
-            return $this->showOffersList($from, $user, $session);
         }
+        return $this->showOffersList($from, $user, $session);
     }
 
     private function selectPlumber($customer, $offerId)
@@ -712,41 +798,48 @@ class WaRuntimeController extends Controller
         $offer = WaOffer::with(['plumber', 'request'])->find($offerId);
         if (!$offer) return;
 
+        // mark selected
         $offer->update(['status' => 'selected']);
-        $offer->request->update(['status' => 'active', 'selected_plumber_id' => $offer->plumber_id]);
+        $offer->request->update([
+            'status' => 'active',
+            'selected_plumber_id' => $offer->plumber_id
+        ]);
 
-        // Clear all plumber sessions for this request
+        // clear plumber sessions for this request
         $allOffers = WaOffer::where('request_id', $offer->request_id)->with('plumber')->get();
         foreach ($allOffers as $offerRecord) {
             WaSession::where('wa_number', $offerRecord->plumber->whatsapp_number)->delete();
         }
 
-        // Notify selected plumber
+        // notify selected plumber (with client details + client phone)
         $this->waSend(
             $offer->plumber->whatsapp_number,
             "✅ You were selected by " . explode(' ', $customer->full_name)[0] . ".\n" .
+            "Client phone: +{$customer->whatsapp_number}\n" .
             "Address: {$customer->address}, {$customer->postal_code} {$customer->city}\n" .
-            "Client WhatsApp: {$customer->whatsapp_number}\n" .
             "Problem: " . $this->getProblemLabel($offer->request->problem) . "\n" .
             "Description: \"{$offer->request->description}\"\n" .
             "Urgency: " . $this->getUrgencyLabel($offer->request->urgency) . "\n\n" .
             "Please proceed. Good luck!"
         );
 
-        // Notify client with plumber details as well
+        // notify client with plumber details + phone
         $this->waSend(
             $customer->whatsapp_number,
-            "✅ Plumber selected: {$offer->plumber->full_name}\n" .
-            "Plumber WhatsApp: {$offer->plumber->whatsapp_number}\n" .
+            "✅ Plumber selected!\n\n" .
+            "Name: {$offer->plumber->full_name}\n" .
+            "Phone: +{$offer->plumber->whatsapp_number}\n" .
             "City: {$offer->plumber->city}\n" .
-            "They have your address and will contact you shortly."
+            "ETA: 20 min • Distance: 5 km\n\n" .
+            "They will contact you shortly."
         );
 
-        // Notify other plumbers
+        // notify other plumbers
         $otherOffers = WaOffer::where('request_id', $offer->request_id)
             ->where('id', '!=', $offerId)
             ->with('plumber')
             ->get();
+
         foreach ($otherOffers as $otherOffer) {
             $this->waSend(
                 $otherOffer->plumber->whatsapp_number,
@@ -764,15 +857,15 @@ class WaRuntimeController extends Controller
     private function sendButtons($to, $payload)
     {
         WaLog::create([
-            'wa_number' => $to,
-            'direction' => 'out',
+            'wa_number'    => $to,
+            'direction'    => 'out',
             'payload_json' => $payload,
-            'status' => 'queued'
+            'status'       => 'queued'
         ]);
 
         return response()->json(['reply' => [
-            'type' => 'buttons',
-            'body' => $payload['body'],
+            'type'    => 'buttons',
+            'body'    => $payload['body'],
             'options' => $payload['options']
         ]]);
     }
@@ -780,16 +873,16 @@ class WaRuntimeController extends Controller
     private function sendList($to, $payload)
     {
         WaLog::create([
-            'wa_number' => $to,
-            'direction' => 'out',
+            'wa_number'    => $to,
+            'direction'    => 'out',
             'payload_json' => $payload,
-            'status' => 'queued'
+            'status'       => 'queued'
         ]);
 
         return response()->json(['reply' => [
-            'type' => 'list',
-            'title' => $payload['title'],
-            'body' => $payload['body'],
+            'type'    => 'list',
+            'title'   => $payload['title'] ?? null,
+            'body'    => $payload['body'],
             'options' => $payload['options']
         ]]);
     }
@@ -797,10 +890,10 @@ class WaRuntimeController extends Controller
     private function replyText($to, $text)
     {
         WaLog::create([
-            'wa_number' => $to,
-            'direction' => 'out',
+            'wa_number'    => $to,
+            'direction'    => 'out',
             'payload_json' => ['type' => 'text', 'body' => $text],
-            'status' => 'queued'
+            'status'       => 'queued'
         ]);
 
         return response()->json(['reply' => ['type' => 'text', 'body' => $text]]);
@@ -834,8 +927,8 @@ class WaRuntimeController extends Controller
     {
         $completedRequest = WaRequest::where('customer_id', $user->id)
             ->where('status', 'completed')
-            ->whereNotExists(function($query) {
-                $query->select(DB::raw(1))->from('ratings')->whereRaw('ratings.request_id = wa_requests.id');
+            ->whereNotExists(function($q){
+                $q->select(DB::raw(1))->from('ratings')->whereRaw('ratings.request_id = wa_requests.id');
             })
             ->latest()
             ->first();
@@ -847,14 +940,14 @@ class WaRuntimeController extends Controller
         WaSession::where('wa_number', $from)->delete();
 
         $session = WaSession::create([
-            'wa_number' => $from,
-            'user_id' => $user->id,
-            'flow_code' => 'rating_flow',
-            'node_code' => 'R1',
+            'wa_number'    => $from,
+            'user_id'      => $user->id,
+            'flow_code'    => 'rating_flow',
+            'node_code'    => 'R1',
             'context_json' => [
-                'request_id' => $completedRequest->id,
-                'plumber_id' => $completedRequest->selected_plumber_id,
-                'user_first_name' => explode(' ', $user->full_name)[0],
+                'request_id'     => $completedRequest->id,
+                'plumber_id'     => $completedRequest->selected_plumber_id,
+                'user_first_name'=> explode(' ', $user->full_name)[0],
             ],
             'last_message_at' => now(),
         ]);
@@ -863,8 +956,13 @@ class WaRuntimeController extends Controller
         $message  = "⭐ Rate Your Experience\n\n";
         $message .= "How was your experience with " . ($plumber ? $plumber->full_name : 'the plumber') . "?\n\n";
         $message .= "Please rate from 1 to 5 stars:\n";
-        $message .= "1 ⭐ - Poor\n2 ⭐⭐ - Fair\n3 ⭐⭐⭐ - Good\n4 ⭐⭐⭐⭐ - Very Good\n5 ⭐⭐⭐⭐⭐ - Excellent\n\n";
+        $message .= "1 ⭐ - Poor\n";
+        $message .= "2 ⭐⭐ - Fair\n";
+        $message .= "3 ⭐⭐⭐ - Good\n";
+        $message .= "4 ⭐⭐⭐⭐ - Very Good\n";
+        $message .= "5 ⭐⭐⭐⭐⭐ - Excellent\n\n";
         $message .= "Reply with a number (1-5) to rate.";
+
         return $this->replyText($from, $message);
     }
 
@@ -884,9 +982,9 @@ class WaRuntimeController extends Controller
 
         DB::table('ratings')->insert([
             'request_id' => $requestId,
-            'customer_id' => $user->id,
+            'customer_id'=> $user->id,
             'plumber_id' => $plumberId,
-            'rating' => $rating,
+            'rating'     => $rating,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -898,84 +996,92 @@ class WaRuntimeController extends Controller
         $stars = str_repeat('⭐', $rating);
         $message  = "Thank you for your rating!\n\n";
         $message .= "You rated: {$stars} ({$rating}/5)\n\n";
+        $message .= "Your feedback helps us improve our service and helps other customers choose the right plumber.\n\n";
         $message .= "Type 'start' to create a new request or 'help' for more options.";
+
         return $this->replyText($from, $message);
     }
 
-    private function markJobCompletedForUser($from, $user, $session)
+    private function markJobCompleted($from, $user, $session)
     {
-        if ($user->role === 'plumber') {
-            $activeRequest = WaRequest::where('selected_plumber_id', $user->id)
-                ->where('status', 'active')
-                ->latest()->first();
-
-            if (!$activeRequest) {
-                return $this->replyText($from, "You don't have any active jobs to mark as completed.");
-            }
-
-            $activeRequest->update(['status' => 'completed']);
-
-            $customer = User::find($activeRequest->customer_id);
-            if ($customer) {
-                $message  = "✅ Job Completed\n\n";
-                $message .= "Your plumber has marked the job as completed.\n\n";
-                $message .= "• Problem: " . $this->getProblemLabel($activeRequest->problem) . "\n";
-                $message .= "• Description: \"{$activeRequest->description}\"\n\n";
-                $message .= "You can rate your experience by typing 'rate'.";
-                $this->waSend($customer->whatsapp_number, $message);
-            }
-
-            return $this->replyText($from, "✅ Job marked as completed successfully!\n\nThe customer has been notified and can now rate your work.\n\nType 'help' for available commands.");
-        }
-
-        // Client marks complete
-        $activeRequest = WaRequest::where('customer_id', $user->id)
-            ->whereIn('status', ['active','in_progress'])
-            ->latest()->first();
+        // Plumber completes
+        $activeRequest = WaRequest::where('selected_plumber_id', $user->id)
+            ->where('status', 'active')
+            ->latest()
+            ->first();
 
         if (!$activeRequest) {
-            return $this->replyText($from, "You don't have any active requests to mark as completed.");
+            return $this->replyText($from, "You don't have any active jobs to mark as completed.");
         }
 
         $activeRequest->update(['status' => 'completed']);
 
+        $customer = User::find($activeRequest->customer_id);
+        if ($customer) {
+            $message  = "✅ Job Completed\n\n";
+            $message .= "Your plumber has marked the job as completed.\n\n";
+            $message .= "Job Details:\n";
+            $message .= "• Problem: " . $this->getProblemLabel($activeRequest->problem) . "\n";
+            $message .= "• Description: \"{$activeRequest->description}\"\n\n";
+            $message .= "You can rate your experience by typing 'rate'.\n";
+            $message .= "To create a new request, type 'start'.";
+            $this->waSend($customer->whatsapp_number, $message);
+        }
+
+        return $this->replyText($from, "✅ Job marked as completed successfully!\n\nThe customer has been notified and can now rate your work.\n\nType 'help' for available commands.");
+    }
+
+    private function markJobCompletedByClient($from, $user, $session)
+    {
+        // Client completes
+        $activeRequest = WaRequest::where('customer_id', $user->id)
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
+        if (!$activeRequest) {
+            return $this->replyText($from, "You don't have any active jobs to mark as completed.\n\nType 'status' to see your latest request.");
+        }
+
+        $activeRequest->update(['status' => 'completed']);
+
+        // Notify plumber, if any
         if ($activeRequest->selected_plumber_id) {
             $plumber = User::find($activeRequest->selected_plumber_id);
             if ($plumber) {
-                $this->waSend($plumber->whatsapp_number, "✅ The client marked the job (Request #{$activeRequest->id}) as completed. Thank you!");
+                $msg = "✅ The client has marked the job as completed.\n\n"
+                     . "Request ID: {$activeRequest->id}\n"
+                     . "Problem: " . $this->getProblemLabel($activeRequest->problem) . "\n"
+                     . "Description: \"{$activeRequest->description}\"";
+                $this->waSend($plumber->whatsapp_number, $msg);
             }
         }
 
-        return $this->replyText($from, "✅ Marked as completed. You can now type 'rate' to rate your experience, or 'start' to create a new request.");
+        // Tell client next steps
+        $message  = "✅ Job marked as completed!\n\n";
+        $message .= "You can now type 'rate' to rate your experience.\n";
+        $message .= "To create a new request, type 'start'.";
+        return $this->replyText($from, $message);
     }
 
-    private function getProblemLabel($problemId)
+    private function getProblemLabel($id)
     {
-        $map = [
-            'leak' => 'Leak',
-            'blockage' => 'Blockage / Drain',
-            'heating' => 'Heating / Boiler',
-            'installation' => 'Installation / Replacement',
-            'other' => 'Other'
-        ];
-        return $map[$problemId] ?? 'Unknown problem';
+        $map = ['leak'=>'Leak','blockage'=>'Blockage / Drain','heating'=>'Heating / Boiler','installation'=>'Installation / Replacement','other'=>'Other'];
+        return $map[$id] ?? 'Unknown problem';
     }
 
-    private function getUrgencyLabel($urgencyId)
+    private function getUrgencyLabel($id)
     {
-        $map = [
-            'high' => 'High — max 60 min',
-            'normal' => 'Normal — max 2 hours',
-            'later' => 'Later today / schedule'
-        ];
-        return $map[$urgencyId] ?? 'Normal';
+        $map = ['high'=>'High — max 60 min','normal'=>'Normal — max 2 hours','later'=>'Later today / schedule'];
+        return $map[$id] ?? 'Normal';
     }
 
     private function showRequestStatus($from, $user, $session)
     {
         $request = WaRequest::where('customer_id', $user->id)
             ->whereIn('status', ['broadcasting', 'active', 'in_progress', 'completed'])
-            ->latest()->first();
+            ->latest()
+            ->first();
 
         if (!$request) {
             return $this->replyText($from, "You don't have any active requests at the moment.\n\nType 'start' to create a new request.");
@@ -990,19 +1096,25 @@ class WaRuntimeController extends Controller
 
         switch ($request->status) {
             case 'broadcasting':
-                $message .= "🔄 Your request is being sent to available plumbers.\nType 'offers' to check for responses from plumbers.";
+                $message .= "🔄 Your request is being sent to available plumbers.\n";
+                $message .= "Type 'offers' to check for responses from plumbers.";
                 break;
             case 'active':
                 if ($request->selected_plumber_id) {
                     $plumber = User::find($request->selected_plumber_id);
-                    $message .= "✅ Plumber selected: " . ($plumber ? $plumber->full_name : 'Unknown') . "\nThe plumber is on their way.";
+                    $message .= "✅ Plumber selected: " . ($plumber ? $plumber->full_name : 'Unknown') . "\n";
+                    $message .= "The plumber is on their way to your location.\n";
+                    $message .= "When the job is finished, type 'complete' to mark it as completed.";
                 }
                 break;
             case 'in_progress':
-                $message .= "🛠️ Work is in progress.";
+                $message .= "🛠️ Work is in progress.\n";
+                $message .= "Type 'complete' when the job is finished.";
                 break;
             case 'completed':
-                $message .= "✅ Job completed!\nType 'rate' to rate your experience.";
+                $message .= "✅ Job completed!\n";
+                $message .= "Type 'rate' to rate your experience with the plumber.\n";
+                $message .= "Type 'start' to create a new request.";
                 break;
         }
 
@@ -1013,114 +1125,80 @@ class WaRuntimeController extends Controller
     {
         $request = WaRequest::where('selected_plumber_id', $user->id)
             ->whereIn('status', ['active', 'in_progress'])
-            ->latest()->first();
+            ->latest()
+            ->first();
 
         if (!$request) {
+            $message = "You don't have any active jobs at the moment.\n\nYou'll receive notifications when new jobs are available in your area.";
             if ($session) $session->delete();
-            return $this->replyText($from, "You don't have any active jobs at the moment.\n\nYou'll receive notifications when new jobs are available in your area.");
+            return $this->replyText($from, $message);
         }
 
         $customer = User::find($request->customer_id);
+
         $message  = "🛠️ Current Job\n\n";
         $message .= "Request ID: {$request->id}\n";
         $message .= "Status: " . ucfirst($request->status) . "\n";
         $message .= "Customer: " . ($customer ? $customer->full_name : 'Unknown') . "\n";
+        $message .= "Client phone: +" . ($customer ? $customer->whatsapp_number : 'N/A') . "\n";
         $message .= "Address: {$customer->address}, {$customer->postal_code} {$customer->city}\n";
-        $message .= "Client WhatsApp: {$customer->whatsapp_number}\n";
         $message .= "Problem: " . $this->getProblemLabel($request->problem) . "\n";
         $message .= "Urgency: " . $this->getUrgencyLabel($request->urgency) . "\n";
         $message .= "Description: \"{$request->description}\"\n\n";
-        $message .= "Type 'complete' to mark this job as completed when you finish.";
+        $message .= ($request->status === 'active')
+            ? "Type 'complete' to mark this job as completed when you finish."
+            : "Work is in progress. Type 'complete' when finished.";
+
         return $this->replyText($from, $message);
     }
 
-    private function handleStartCommand($from, $user, $session, bool $forceNew = false)
+    private function handleStartCommand($from, $user, $session)
     {
-        // If there's any existing request, delete it first when forcing new
         $activeRequest = WaRequest::where('customer_id', $user->id)
             ->whereIn('status', ['broadcasting', 'active', 'in_progress'])
-            ->latest()->first();
+            ->first();
 
-        if ($activeRequest && !$forceNew) {
-            $message  = "You already have an active request (ID: {$activeRequest->id}).\n\n";
+        if ($activeRequest) {
+            $message = "You already have an active request (ID: {$activeRequest->id}).\n\n";
             if ($activeRequest->status === 'broadcasting') {
-                $message .= "Your request is currently being sent to available plumbers.\nType 'offers' to check for responses from plumbers.";
+                $message .= "Your request is currently being sent to available plumbers.\n";
+                $message .= "Type 'offers' to check for responses from plumbers.";
             } else {
-                $message .= "A plumber has been selected for your job.\nType 'status' to check the current status.";
+                $message .= "A plumber has been selected for your job.\n";
+                $message .= "Type 'status' to check the current status.";
             }
             return $this->replyText($from, $message);
         }
 
-        if ($activeRequest && $forceNew) {
-            $this->deleteRequestAndCleanup($activeRequest, 'Client started a new request');
-        }
-
         if ($session) $session->delete();
 
-        // Fresh session for client
-        if ($user->role === 'client') {
-            $session = WaSession::create([
-                'wa_number' => $from,
-                'user_id' => $user->id,
-                'flow_code' => 'client_flow',
-                'node_code' => 'C0',
-                'context_json' => [
-                    'user_first_name' => explode(' ', $user->full_name)[0],
-                    'user_address' => $user->address,
-                    'user_postal_code' => $user->postal_code,
-                    'user_city' => $user->city,
-                ],
-                'last_message_at' => now(),
-            ]);
-            return $this->replyText($from, "Starting new request... Please describe your problem.");
-        }
+        $session = WaSession::create([
+            'wa_number'      => $from,
+            'user_id'        => $user->id,
+            'flow_code'      => 'client_flow',
+            'node_code'      => 'C0',
+            'context_json'   => [
+                'user_first_name'  => explode(' ', $user->full_name)[0],
+                'user_address'     => $user->address,
+                'user_postal_code' => $user->postal_code,
+                'user_city'        => $user->city,
+            ],
+            'last_message_at' => now(),
+        ]);
 
-        return $this->replyText($from, "👋 Hi " . explode(' ', $user->full_name)[0] . "! You're now available to receive job requests.\n\nWhen a customer creates a request near you, you'll receive a notification automatically.\n\nType 'help' for available commands.");
+        return $this->replyText($from, "Starting new request... Please describe your problem.");
     }
 
     private function setAvailability($from, $user, $session, $available)
     {
         $user->update(['status' => $available ? 'available' : 'unavailable']);
-        $message = $available 
+
+        $message = $available
             ? "✅ You are now available to receive job requests.\n\nYou'll be notified when new jobs are available in your area."
             : "❌ You are now unavailable and won't receive job requests.\n\nType 'help' to change your status.";
+
         if ($session) $session->delete();
         return $this->replyText($from, $message);
-    }
-
-    private function cancelCurrentRequest($from, $user, $session)
-    {
-        $request = WaRequest::where('customer_id', $user->id)
-            ->whereIn('status', ['broadcasting','active','in_progress'])
-            ->latest()->first();
-
-        if (!$request) {
-            return $this->replyText($from, "You don't have any active request to cancel.");
-        }
-
-        // notify selected plumber if any
-        if ($request->selected_plumber_id) {
-            $plumber = User::find($request->selected_plumber_id);
-            if ($plumber) {
-                $this->waSend($plumber->whatsapp_number, "❌ The client canceled Request #{$request->id}. Thanks for your availability.");
-            }
-        }
-
-        $this->deleteRequestAndCleanup($request, 'Client canceled the request');
-
-        // clear session to let them start again easily
-        if ($session) $session->delete();
-
-        return $this->replyText($from, "✅ Your current request has been canceled.\nType 'start' to create a new request.");
-    }
-
-    private function deleteRequestAndCleanup(WaRequest $request, string $reason = '')
-    {
-        // delete offers first
-        WaOffer::where('request_id', $request->id)->delete();
-        // delete the request
-        $request->delete();
-        \Log::info('Request deleted', ['request_id' => $request->id, 'reason' => $reason]);
     }
 
     private function showSupportMessage($from, $user, $session)

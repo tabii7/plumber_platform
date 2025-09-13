@@ -39,9 +39,9 @@ class WelcomeNotification extends Notification
         $hasActiveSubscription = $this->hasActiveSubscription($user);
         
         $message = (new MailMessage)
-            ->subject('Welcome to Plumber Platform! 🚰')
+            ->subject('Welcome to Loodgieter.app! 🚰')
             ->greeting("Hello {$user->full_name}!")
-            ->line("Welcome to Plumber Platform! We're excited to have you on board.")
+            ->line("Welcome to Loodgieter.app! We're excited to have you on board.")
             ->line("You've successfully registered as a {$user->role}.");
 
         if ($user->company_name) {
@@ -80,7 +80,7 @@ class WelcomeNotification extends Notification
             ->line("If you have any questions or need assistance, feel free to reach out to our support team.")
             ->line("")
             ->line("Best regards,")
-            ->line("The Plumber Platform Team");
+            ->line("The Loodgieter.app Team");
 
         return $message;
     }
